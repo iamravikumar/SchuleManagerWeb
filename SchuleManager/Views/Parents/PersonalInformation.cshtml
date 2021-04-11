@@ -1,0 +1,402 @@
+﻿@using SchuleManager.Models
+@model Parents
+@{
+    ViewBag.Title = "Parents' Personal Information";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style type="text/css">  
+    h4 {
+        width: 100%; 
+        text-align: center; 
+        border-bottom: 1px solid #000; 
+        line-height: 0.1em;
+        margin: 10px 0 20px; 
+    } 
+
+    h4 span { 
+        background:#fff; 
+        padding:0 10px; 
+    }
+</style>
+
+<script type="text/javascript">
+
+    $(document).ready(function () {
+
+        $(".datePickers").datepicker({
+            dateFormat: 'dd-mm-yy'
+        });
+
+        //Gets entered accounts details and returns pop up search modal incase of F2 press
+        $('#ParentID').on('input keydown', function (event) {
+
+            var data;
+            var keycode = event.keyCode || event.which;
+
+            if (keycode === 113) { //F2 key press
+
+                return helpGeneralSearch("P");
+
+            } else {
+                data = {
+                    parentId: $(this).val()
+                };
+
+                $.getJSON("GetParentDetails",
+                    data,
+                    function (json) {
+                        if (json.length) {
+
+                            $('#TitleCode').val(json[0].TitleCode);
+                            $('#SurName').val(json[0].SurName);
+                            $('#OtherNames').val(json[0].OtherNames);
+                            $('#Dateofbirth').val(json[0].Dateofbirth);
+                            $('#Gender').val(json[0].Gender);
+                            $('#NationalityCode').val(json[0].NationalityCode);
+                            $('#EducationCode').val(json[0].EducationCode);
+                            $('#Occupation').val(json[0].Occupation);
+                            $('#ResidentialAddress').val(json[0].RAddress);
+                            $('#RPhone1').val(json[0].RPhone1);
+
+                            $('#btnEditTransaction, #btnCancelTransaction').removeAttr("disabled");
+                        }
+                    });
+            }
+
+            return null;
+        });
+
+    });
+
+</script>
+
+<div class="row">
+    <div class="col-md-12">
+        <h2>Parents' Personal Information</h2>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-10">
+        <div class="panel panel-default" id="bioData-panel" style="padding: 10px">
+            <div class="row">
+                <div class="col-md-2">
+                    @Html.Label("Parent ID:", new { @class = "control-label" })
+                </div>
+                <div class="col-md-3">
+                    @Html.TextBoxFor(model => model.ParentID, new { @class = "form-control" })
+                </div>
+                <div class="col-md-5"></div>
+            </div>
+            <br/>
+            <div class="row">
+                <div class="col-md-2">
+                    @Html.Label("Title:", new { @class = "control-label" })
+                </div>
+                <div class="col-md-3">
+                    @Html.DropDownListFor(model => model.TitleCode, new SelectList((List<Titles>)ViewData["Titles"], "TitleCode", "Title"), "- Select -", new { @class = "form-control", disabled = true })
+                </div>
+                <div class="col-md-2">
+                    @Html.Label("Surname:", new { @class = "control-label" })
+                </div>
+                <div class="col-md-3">
+                    @Html.TextBoxFor(model => model.SurName, new { @class = "form-control", disabled = true })
+                </div>
+            </div>
+            <br/>
+            <div class="row">
+                <div class="col-md-2">
+                    @Html.Label("Other Names:", new { @class = "control-label" })
+                </div>
+                <div class="col-md-8">
+                    @Html.TextBoxFor(model => model.OtherNames, new { @class = "form-control", disabled = true })
+                </div>
+            </div>
+            <br/>
+            <div class="row">
+                <div class="col-md-2">
+                    @Html.Label("Date Of Birth:", new { @class = "control-label" })
+                </div>
+                <div class="col-md-2">
+                    @Html.TextBoxFor(model => model.Dateofbirth, new { @class = "form-control datePickers", disabled = true })
+                </div>
+                <div class="col-md-1">
+                    @Html.Label("Gender:", new { @class = "control-label" })
+                </div>
+                <div class="col-md-1">
+                    @Html.DropDownList("Gender", new List<SelectListItem> { new SelectListItem { Text = @"MALE", Value = "M" }, new SelectListItem { Text = @"FEMALE", Value = "F" } }, new { @class = "form-control", disabled = true })
+                </div>
+                <div class="col-md-2">
+                    @Html.Label("Nationality:", new { @class = "control-label" })
+                </div>
+                <div class="col-md-2">
+                    @Html.DropDownListFor(model => model.NationalityCode, new SelectList((List<Nationalities>)ViewData["Nationality"], "NationalityCode", "Nationality"), "Select", new { @class = "form-control", disabled = true })
+                </div>
+            </div>
+            <br/>
+            <div class="row">
+                <div class="col-md-2">
+                    @Html.Label("Education:", new { @class = "control-label" })
+                </div>
+                <div class="col-md-3">
+                    @Html.DropDownListFor(model => model.EducationCode, new SelectList((List<Education>)ViewData["Education"], "EducationCode", "EducationLevel"), "Select", new { @class = "form-control", disabled = true })
+                </div>
+                <div class="col-md-2">
+                    @Html.Label("Occupation:", new { @class = "control-label" })
+                </div>
+                <div class="col-md-3">
+                    @Html.TextBox("Occupation", null, new { @class = "form-control", disabled = true })
+                </div>
+            </div>      
+        </div>
+        <h4><span>Residential Information</span></h4>
+        <div class="panel panel-default" id="residentialInfo-panel" style="padding: 10px">
+            <div class="row">
+                <div class="col-md-2">
+                    @Html.Label("Address:", new { @class = "control-label" })
+                </div>
+                <div class="col-md-8">
+                    @Html.TextArea("ResidentialAddress", null, new { @class = "form-control", disabled = true })
+                </div>
+            </div>
+            <br/>
+            <div class="row">
+                <div class="col-md-2">
+                    @Html.Label("Phone 1:", new { @class = "control-label" })
+                </div>
+                <div class="col-md-3">
+                    @Html.TextBoxFor(model => model.RPhone1, new { @class = "form-control", disabled = true })
+                </div>
+                <div class="col-md-2">
+                    @Html.Label("Phone 2:", new { @class = "control-label" })
+                </div>
+                <div class="col-md-3">
+                    @Html.TextBoxFor(model => model.RPhone2, new { @class = "form-control", disabled = true })
+                </div>
+            </div>
+            <br/>
+            <div class="row">
+                <div class="col-md-2">
+                    @Html.Label("Email ID:", new { @class = "control-label" })
+                </div>
+                <div class="col-md-3">
+                    @Html.TextBoxFor(model => model.REmailID1, new { @class = "form-control", disabled = true })
+                </div>
+                <div class="col-md-2">
+                    @Html.Label("Email ID 2:", new { @class = "control-label" })
+                </div>
+                <div class="col-md-3">
+                    @Html.TextBoxFor(model => model.REmailID2, new { @class = "form-control", disabled = true })
+                </div>
+            </div>
+        </div>
+        <h4><span>Business Information</span></h4>
+        <div class="panel panel-default" id="businessInfo-panel" style="padding: 10px">
+            <div class="row">
+                <div class="col-md-2">
+                    @Html.Label("Address:", new { @class = "control-label" })
+                </div>
+                <div class="col-md-8">
+                    @Html.TextArea("BusinessAddress", null, new { @class = "form-control", disabled = true })
+                </div>
+            </div>
+            <br/>
+            <div class="row">
+                <div class="col-md-2">
+                    @Html.Label("Phone 1:", new { @class = "control-label" })
+                </div>
+                <div class="col-md-3">
+                    @Html.TextBoxFor(model => model.BPhone1, new { @class = "form-control", disabled = true })
+                </div>
+                <div class="col-md-2">
+                    @Html.Label("Phone 2:", new { @class = "control-label" })
+                </div>
+                <div class="col-md-3">
+                    @Html.TextBoxFor(model => model.BPhone2, new { @class = "form-control", disabled = true })
+                </div>
+            </div>
+            <br/>
+            <div class="row">
+                <div class="col-md-2">
+                    @Html.Label("Email ID:", new { @class = "control-label" })
+                </div>
+                <div class="col-md-3">
+                    @Html.TextBoxFor(model => model.BEmailID1, new { @class = "form-control", disabled = true })
+                </div>
+                <div class="col-md-2">
+                    @Html.Label("Email ID 2:", new { @class = "control-label" })
+                </div>
+                <div class="col-md-3">
+                    @Html.TextBoxFor(model => model.BEmailID2, new { @class = "form-control", disabled = true })
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2" style="height: 710px">
+        <div class="panel panel-default" id="buttons-panel" style="padding: 10px; height: 100%">
+            <div class="row">
+                <button style="width: 100%" class="btn btn-primary" id="btnAddParent">Add</button>
+            </div>
+            <br />
+            <div class="row">
+                <button style="width: 100%" class="btn btn-info" id="btnEditParent" disabled="disabled">Edit</button>
+            </div>
+            <br/>
+            <div class="row">
+                <button style="width: 100%" class="btn btn-success" id="btnSaveParent" disabled="disabled">Save</button>
+            </div>
+            <br/>
+            <div class="row">
+                <button style="width: 100%" class="btn btn-danger" id="btnCancel" disabled="disabled">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="searchModal" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Search</h4>
+            </div>
+            <div class="modal-body" id="searchContent">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="messageModal" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body" id="messageContent">
+                <p id="message"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    
+    function helpGeneralSearch(flag) {
+        var url = '@Url.Content("~/")' + "Search/HelpGeneralSearch";
+        $.ajax({
+            type: "POST",
+            url: url,
+            data: '{searchFlag: "' + flag + '" }',
+            contentType: "application/json; charset=utf-8",
+            dataType: "html",
+            success: function (response) {
+                $('#searchContent').html(response);
+                $('#searchModal').modal('show');
+            },
+            failure: function () {
+                $('#searchContent').text(response.message);
+                $('#searchModal').modal('show');
+            }
+        });
+    };
+
+    $('#btnSaveParent').click(function(e) {
+
+        e.preventDefault();
+
+        var option;
+
+        if ($('#ParentID').val() === '') {
+            option = 'A';
+        } else {
+            option = 'E';
+        }
+
+        var parentData = {
+            ParentID: $('#ParentID').val(),
+            TitleCode: $('#TitleCode').val(),
+            SurName: $('#SurName').val(),
+            OtherNames: $('#OtherNames').val(),
+            Dateofbirth: $('#Dateofbirth').val(),
+            Gender: $('#Gender').val(),
+            NationalityCode: $('#NationalityCode').val(),
+            EducationCode: $('#EducationCode').val(),
+            Occupation: $('#Occupation').val(),
+            ResidentialAddress: $('#ResidentialAddress').val(),
+            RPhone1: $('#RPhone1').val(),
+            RPhone2: $('#RPhone2').val(),
+            REmailID1: $('#REmailID1').val(),
+            REmailID2: $('#REmailID2').val(),
+            BusinessAddress: $('#BusinessAddress').val(),
+            BPhone1: $('#BPhone1').val(),
+            BPhone2: $('#BPhone2').val(),
+            BEmailID1: $('#BEmailID1').val(),
+            BEmailID2: $('#BEmailID2').val()
+        };
+
+        $.ajax({
+            type: "POST",
+            url: '@Url.Action("AddEditParents", "Parents")',
+            data: {
+                parent: parentData,
+                action: option
+            },
+            dataType: "json",
+            success: function(response) {
+                if (response) {
+                    $('#message').text(response.message);
+                    $('#messageModal').modal('show');
+                }
+            }
+        });
+
+        return false;
+    });
+
+    $('#btnAddParent').click(function (e) {
+
+        e.preventDefault();
+
+        resetInputs();
+
+        $('#ParentID').attr('disabled', 'disabled');
+
+        $('#TitleCode, #SurName, #OtherNames, #Dateofbirth, #Gender, #NationalityCode, #EducationCode, #Occupation, #ResidentialAddress, #RPhone1, #RPhone2, #REmailID1, #REmailID2, #BusinessAddress, #BPhone1, #BPhone2, #BEmailID1, #BEmailID2, #btnSaveTransaction').removeAttr('disabled');
+
+        return false;
+    });
+
+    $('#btnEditParent').click(function(e) {
+
+        e.preventDefault();
+
+        $('#ParentID').attr('disabled', 'disabled');
+
+        $('#TitleCode, #SurName, #OtherNames, #Dateofbirth, #Gender, #NationalityCode, #EducationCode, #Occupation, #ResidentialAddress, #RPhone1, #RPhone2, #REmailID1, #REmailID2, #BusinessAddress, #BPhone1, #BPhone2, #BEmailID1, #BEmailID2, #btnSaveTransaction').removeAttr('disabled');
+
+        return false;
+    });
+
+    $('#btnCancel').click(function (e) {
+
+        e.preventDefault();
+
+        resetInputs();
+
+        $('#TitleCode, #SurName, #OtherNames, #Dateofbirth, #Gender, #NationalityCode, #EducationCode, #Occupation, #ResidentialAddress, #RPhone1, #RPhone2, #REmailID1, #REmailID2, #BusinessAddress, #BPhone1, #BPhone2, #BEmailID1, #BEmailID2, #btnSaveTransaction').attr('disabled', 'disabled');
+
+        return false;
+    });
+
+    function resetInputs() {
+        
+        $('#TitleCode, #SurName, #OtherNames, #Dateofbirth, #Gender, #NationalityCode, #EducationCode, #Occupation, #ResidentialAddress, #RPhone1, #RPhone2, #REmailID1, #REmailID2, #BusinessAddress, #BPhone1, #BPhone2, #BEmailID1, #BEmailID2').val('');
+    }
+
+</script>

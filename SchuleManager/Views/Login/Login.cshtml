@@ -1,0 +1,84 @@
+﻿@model SchuleManager.Models.LoginViewModel
+@using CaptchaMvc.HtmlHelpers
+@{
+    ViewBag.Title = "Login";
+    Layout = "~/Views/Shared/_LayoutLogin.cshtml";
+}
+<style>
+    #CaptchaInputText {
+        text-transform: uppercase;
+    }
+    body{
+        font-size:14px;
+    }
+  .form-control{
+      height:30px;
+      border:none;
+  }
+  .card{
+      box-shadow: 0 1px #FFFFFF inset, 0 1px 3px rgba(34, 25, 25, 0.4);
+  }
+</style>
+
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+    <div class="container m-5">
+            <div class="row  m-0"  id="main-row">
+                <div class="col-md-4 " id="leftdiv"  >
+                    <div class="card">
+                        <div class="card-body">
+                            <img src="~/Img/logo.png"  style="height: 120px; margin-left: 50px;"/>
+                            <h6 style="margin-top: 17px;">WELCOME TO SHULE MANAGER</h6>
+                            <hr/>
+                            <p>Automate Your School Processes</p>
+                            <marquee><span style="color: blue">Finance</span> | <span style="color: green">Education</span> | <span style="color: orange">Stuffs</span> | <span style="color: black">Inventory</span> | <span style="color: red">Managment</span> | <span style="color: green;">Communication</span> | <span style="color: purple;">Transport</span> | <span style="color: green">Library Management </span> </marquee>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-8">
+                    <div class="right">
+                        
+                     @if (ViewBag.errormessage != null)
+                {
+                         <p class="alert alert-danger" id="successMessage">@ViewBag.errormessage</p>
+                     }
+
+                     @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+
+                     <div class="form-group">
+                         @Html.LabelFor(model => model.Username)
+                         @Html.TextBoxFor(model => model.Username, new { @class = "form-control", @maxlength = 20 })
+                         @Html.ValidationMessageFor(model => model.Username, "", new { @class = "text-danger" })
+                     </div>
+                     <div class="form-group">
+                         @Html.LabelFor(model => model.Password)
+                         @Html.PasswordFor(model => model.Password, new { @class = "form-control", @maxlength = 30 })
+                         @Html.ValidationMessageFor(model => model.Password, "", new { @class = "text-danger" })
+                     </div>
+                     <div class="form-group">
+                         @Html.LabelFor(model => model.SchoolCode)
+                         @Html.TextBoxFor(model => model.SchoolCode, new { @class = "form-control", @maxlength = 10 })
+                         @Html.ValidationMessageFor(model => model.SchoolCode, "", new { @class = "text-danger" })
+                     </div>
+                     <div class="row">
+                         <div class="col-6">
+                             <div class="form-group">
+                                 @Html.Label("Captcha")
+                                 @Html.Captcha("Refresh", "Enter the text you see above", 5, "<span class='text-danger'>Enter Captcha</span>", true)
+                             </div>
+                         </div>
+                     </div>
+                     <div class="form-group">
+                         <button type="submit" value="Login" class="btn btn-primary" style="width:100px;">
+                             Login
+                         </button>
+                     </div>
+                    </div>
+                </div>
+            </div>
+    </div>
+}
+
+
+

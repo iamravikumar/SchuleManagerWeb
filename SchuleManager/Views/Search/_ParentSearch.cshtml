@@ -1,0 +1,178 @@
+﻿
+
+@{
+    ViewBag.Title = "Parent Search";
+    Layout = null;
+}
+
+@*<link href="~/Scripts/dataTablesScripts/dataTables.bootstrap.min.css" rel="stylesheet" />
+<link href="~/Scripts/dataTablesScripts/responsive.bootstrap.min.css" rel="stylesheet" />*@
+<link href="~/Content/jquery.dataTables.css" rel="stylesheet" />
+<script src="~/Scripts/dataTablesScripts/jquery.dataTables.min.js"></script>
+@*<script src="~/Scripts/dataTablesScripts/dataTables.bootstrap4.min.js"></script>*@
+
+<style type="text/css">
+    #scrolly {
+        width: 1000px;
+        height: 450px;
+        overflow: auto;
+        overflow-y: hidden;
+        margin: 0 auto;
+        white-space: nowrap;
+    }
+</style>
+
+
+<table id="parentTable" class="table table-striped table-bordered" style="width:100%">
+    <thead>
+    <tr>
+        <th class="col-md-2">Parent ID</th>
+        <th>Title</th>
+        <th>Surname</th>
+        <th></th>
+        <th></th>
+        <th></th>
+        <th></th>
+        <th></th>
+        <th></th>
+        <th></th>
+        <th></th>
+    </tr>
+    </thead>
+</table>
+
+<script type="text/javascript">
+
+    var Popup, dataTable;
+
+    $(document).ready(function () {
+        dataTable = $("#parentTable").DataTable({
+            "processing": true, // for show progress bar
+            "serverSide": true, // for process server side
+            "filter": true, // this is for disable filter (search box)
+            "orderMulti": false, // for disable multiple column at once
+            "ajax": {
+                "url": "/SchuleManager/Search/LoadGeneralSearchData",
+                "data":{ flag: 'P' },
+                "type": "POST",
+                "datatype": "json"
+            },
+            "columnDefs":
+            [
+                {
+                    "targets": [0],
+                    "visible": true,
+                    "searchable": false,
+                    "orderable": false
+                },
+                {
+                    "targets": [1],
+                    "visible": true,
+                    "searchable": false,
+                    "orderable": false
+                },
+                {
+                    "targets": [2],
+                    "visible": true,
+                    "searchable": true,
+                    "orderable": false
+                },
+                {
+                    "targets": [3],
+                    "visible": true,
+                    "searchable": true,
+                    "orderable": false
+                },
+                {
+                    "targets": [4],
+                    "visible": false,
+                    "searchable": false,
+                    "orderable": false
+                },
+                {
+                    "targets": [5],
+                    "visible": false,
+                    "searchable": false,
+                    "orderable": false
+                },
+                {
+                    "targets": [6],
+                    "visible": false,
+                    "searchable": false,
+                    "orderable": false
+                },
+                {
+                    "targets": [7],
+                    "visible": false,
+                    "searchable": false,
+                    "orderable": false
+                },
+                {
+                    "targets": [8],
+                    "visible": false,
+                    "searchable": false,
+                    "orderable": false
+                },
+                {
+                    "targets": [9],
+                    "visible": false,
+                    "searchable": false,
+                    "orderable": false
+                },
+                {
+                    "targets": [10],
+                    "visible": false,
+                    "searchable": false,
+                    "orderable": false
+                }
+            ],
+            "columns": [
+                { "data": "ParentID", "name": "ParentID", "autoWidth": true },
+                { "data": "TitleCode", "name": "TitleCode", "autoWidth": true },
+                { "data": "SurName", "name": "SurName", "autoWidth": true },
+                { "data": "OtherNames", "name": "OtherNames", "autoWidth": true },
+                { "data": "Dateofbirth", "name": "Dateofbirth", "autoWidth": true },
+                { "data": "Gender", "name": "Gender", "autoWidth": true },
+                { "data": "NationalityCode", "name": "NationalityCode", "autoWidth": true },
+                { "data": "EducationCode", "name": "EducationCode", "autoWidth": true },
+                { "data": "Occupation", "name": "Occupation", "autoWidth": true },
+                { "data": "RAddress", "name": "RAddress", "autoWidth": true },
+                { "data": "RPhone1", "name": "RPhone1", "autoWidth": true }
+            ]
+
+        });
+
+        $('#parentTable tbody').on('click', 'tr', function () {
+
+            if ($(this).hasClass('selected')) {
+                $(this).removeClass('selected');
+            }
+            else {
+                dataTable.$('tr.selected').removeClass('selected');
+                $(this).addClass('selected');
+                var pos = dataTable.row(this).index();
+                var row = dataTable.row(pos).data();
+
+                $('#ParentID, #EntityID').val(row['ParentID']);
+                $('#TitleCode').val(row['TitleCode']);
+                $('#SurName').val(row['SurName']);
+                $('#OtherNames').val(row['OtherNames']);
+                $('#ParentsName').val(row['SurName'] + " " + row['OtherNames']);
+                $('#Dateofbirth').val(row['Dateofbirth']);
+                $('#Gender').val(row['Gender']);
+                $('#NationalityCode').val(row['NationalityCode']);
+                $('#EducationCode').val(row['EducationCode']);
+                $('#Occupation').val(row['Occupation']);
+                $('#ResidentialAddress').val(row['RAddress']);
+                $('#RPhone1').val(row['RPhone1']);
+
+                $("#searchModal").modal('toggle');
+            }
+            
+        });
+    });
+
+
+
+</script>
+

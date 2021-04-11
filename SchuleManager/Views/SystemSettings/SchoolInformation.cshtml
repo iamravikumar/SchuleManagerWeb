@@ -1,0 +1,251 @@
+﻿@model SchuleManager.Models.SystemSettings
+   
+@{
+    ViewBag.Title = "School Information";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<style type="text/css">
+    h4 {
+        width: 100%;
+        text-align: left;
+        border-bottom: 1px solid #000;
+        line-height: 0.1em;
+        margin: 10px 0 20px;
+        color: red
+    }
+
+    h4 span {
+        background: #fff;
+        padding: 0 10px;
+    }
+</style>
+<div class="row">
+    <div class="col-md-5">
+        <h2>School Information</h2>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-10">
+        <div class="form-horizontal">
+            <h4><span>Contact Information:</span></h4>
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <div class="form-group row">
+                        @Html.Label("School Name:", new {@class = "col-sm-2 col-form-label manadatory"})
+                        <div class="col-sm-8">
+                            @Html.TextBoxFor(model => Model.CompanyName, null, new {@class = "form-control", disabled = true})
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        @Html.Label("Physical Address:", new {@class = "col-sm-2 col-form-label manadatory"})
+                        <div class="col-sm-8">
+                            @Html.TextBoxFor(model => Model.PAddress, null, new {@class = "form-control", disabled = true})
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        @Html.Label("P.O. Box Address:", new {@class = "col-sm-2 col-form-label"})
+                        <div class="col-sm-8">
+                            @Html.TextBoxFor(model => Model.BoxAddress, null, new {@class = "form-control", disabled = true})
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        @Html.Label("Email Address:", new {@class = "col-sm-2 col-form-label manadatory"})
+                        <div class="col-sm-3">
+                            @Html.TextBoxFor(model => Model.Email1, null, new {@class = "form-control", disabled = true})
+                        </div>
+                        @Html.Label("Email Address 2:", new {@class = "col-sm-2 col-form-label"})
+                        <div class="col-sm-3">
+                            @Html.TextBoxFor(model => Model.Email2, null, new {@class = "form-control", disabled = true})
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        @Html.Label("Phone Number:", new {@class = "col-sm-2 col-form-label manadatory"})
+                        <div class="col-sm-3">
+                            @Html.TextBoxFor(model => Model.Phone1, null, new {@class = "form-control", disabled = true})
+                        </div>
+                        @Html.Label("Phone Number 2:", new {@class = "col-sm-2 col-form-label"})
+                        <div class="col-sm-3">
+                            @Html.TextBoxFor(model => Model.Phone2, null, new {@class = "form-control", disabled = true})
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        @Html.Label("Website:", new {@class = "col-sm-2 col-form-label"})
+                        <div class="col-sm-8">
+                            @Html.TextBoxFor(model => Model.Website, null, new {@class = "form-control", disabled = true})
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        @Html.Label("School Motto:", new {@class = "col-sm-2 col-form-label"})
+                        <div class="col-sm-8">
+                            @Html.TextBoxFor(model => Model.TagLine, null, new {@class = "form-control", disabled = true})
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="panel panel-default" style="height: 330px">
+            <div class="panel-body table-responsive">
+                <table class="table table-bordered text-center">
+                    <tbody>
+                    <tr>
+                        <td>
+                            <button class="btn btn-block btn-secondary" id="btnEdit" type="button">Edit</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <button class="btn btn-block btn-success" disabled="disabled" id="btnSave" type="button">Save</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <button class="btn btn-block btn-warning" id="btnCancel" disabled="disabled" type="button">Cancel</button>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modal-success" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content bg-success">
+            <div class="modal-header">
+                <h4 class="modal-title">Success Modal</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <div class="modal-body" id="success-content">
+                <p id="success-message"></p>
+            </div>
+            <div class="modal-footer justify-content-between">
+                <button type="button" class="btn btn-outline-light" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modal-failure" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content bg-danger">
+            <div class="modal-header">
+                <h4 class="modal-title">Danger Modal</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <div class="modal-body" id="failure-content">
+                <p id="failure-message"></p>
+            </div>
+            <div class="modal-footer justify-content-between">
+                <button type="button" class="btn btn-outline-light" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+
+    $('#btnEdit').click(function(e) {
+
+        e.preventDefault();
+
+        $('#btnSave, #btnCancel, #PAddress, #BoxAddress, #Email1, #Email2, #Phone1, #Phone2, #Website, #TagLine')
+            .removeAttr('disabled');
+
+        $(this).attr('disabled', 'disabled');
+
+        return false;
+    });
+
+
+    $('#btnSave').click(function(e) {
+
+        e.preventDefault();
+
+        var schoolInfo = {
+            PAddress : $('#PAddress').val(),
+            BoxAddress: $('#BoxAddress').val(),
+            Email1: $('#Email1').val(),
+            Email2: $('#Email2').val(),
+            Phone1: $('#Phone1').val(),
+            Phone2: $('#Phone2').val(),
+            Website: $('#Website').val(),
+            TagLine: $('#TagLine').val()
+        }
+
+        $.ajax({
+            type: "POST",
+            url: '@Url.Action("UpdateSchoolInfo", "SystemSettings")',
+            data: {
+                user: schoolInfo
+            },
+            dataType: "json",
+            success: function (response) {
+                if (response) {
+                    if (response.success) {
+                        $('#success-message').text(response.message);
+                        $('#modal-success').modal('show');
+                    } else {
+                        $('#failure-message').text(response.message);
+                        $('#modal-failure').modal('show');
+                    }
+                }
+            }
+        }).done(function () {
+
+            $.getJSON("GetSchoolInfo", data, function (json) {
+
+                if (json.length) {
+                    $('#PAddress').val(json[0].PAddress);
+                    $('#BoxAddress').val(json[0].BoxAddress);
+                    $('#Email1').val(json[0].Email1);
+                    $('#Email2').val(json[0].Email2);
+                    $('#Phone1').val(json[0].Phone1);
+                    $('#Phone2').val(json[0].Phone2);
+                    $('#Website').val(json[0].Website);
+                    $('#TagLine').val(json[0].TagLine);
+                }
+            });
+
+            $('#btnSave, #btnCancel, #PAddress, #BoxAddress, #Email1, #Email2, #Phone1, #Phone2, #Website, #TagLine')
+                .attr('disabled', 'disabled');
+
+            $('#btnEdit').removeAttr('disabled');
+
+        });
+
+        return false;
+    });
+
+    $('#btnCancel').click(function(e) {
+
+        e.preventDefault();
+
+        $.getJSON("GetSchoolInfo", data, function (json) {
+
+            if (json.length) {
+                $('#PAddress').val(json[0].PAddress);
+                $('#BoxAddress').val(json[0].BoxAddress);
+                $('#Email1').val(json[0].Email1);
+                $('#Email2').val(json[0].Email2);
+                $('#Phone1').val(json[0].Phone1);
+                $('#Phone2').val(json[0].Phone2);
+                $('#Website').val(json[0].Website);
+                $('#TagLine').val(json[0].TagLine);
+            }
+        });
+
+        $('#btnEdit').removeAttr('disabled');
+
+        $('#btnSave, #btnCancel').attr('disabled', 'disabled');
+
+        return false;
+    });
+
+</script>

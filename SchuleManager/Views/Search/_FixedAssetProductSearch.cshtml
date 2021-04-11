@@ -1,0 +1,105 @@
+﻿@{
+    ViewBag.Title = "Fixed Asset Product Search";
+    Layout = null;
+}
+
+<link href="~/Content/jquery.dataTables.css" rel="stylesheet" />
+<script src="~/Scripts/dataTablesScripts/jquery.dataTables.min.js"></script>
+
+<style type="text/css">
+    #scrolly {
+        width: 1000px;
+        height: 450px;
+        overflow: auto;
+        overflow-y: hidden;
+        margin: 0 auto;
+        white-space: nowrap;
+    }
+</style>
+
+
+<table id="fixedAssetProductTable" class="table table-striped table-bordered" style="width:100%">
+    <thead>
+    <tr>
+        <th class="col-md-2">Product Code</th>
+        <th>Product Name</th>
+        <th></th>
+    </tr>
+    </thead>
+</table>
+
+<script type="text/javascript">
+
+    var dataTable;
+
+    $(document).ready(function () {
+
+        dataTable = $("#fixedAssetProductTable").DataTable({
+            "processing": true, // for show progress bar
+            "serverSide": true, // for process server side
+            "filter": false, // this is for disable filter (search box)
+            "orderMulti": false, // for disable multiple column at once
+            "ajax": {
+                "url": "/SchuleManager/Search/LoadGeneralSearchData",
+                "data":{ flag: 'F' },
+                "type": "POST",
+                "datatype": "json"
+            },
+            "columnDefs":
+            [
+                {
+                    "targets": [0],
+                    "visible": true,
+                    "searchable": true,
+                    "orderable": false
+                },
+                {
+                    "targets": [1],
+                    "visible": true,
+                    "searchable": true,
+                    "orderable": false
+                },
+                {
+                    "targets": [2],
+                    "visible": false,
+                    "searchable": false,
+                    "orderable": false
+                }
+            ],
+            "columns": [
+                { "data": "ProductCode", "name": "ProductCode", "autoWidth": true },
+                { "data": "ProductName", "name": "ProductName", "autoWidth": true },
+                { "data": "AssetIDPrefix", "name": "AssetIDPrefix", "autoWidth": true }
+            ]
+
+        });
+
+        $('#fixedAssetProductTable tbody').on('click', 'tr', function () {
+
+            if ($(this).hasClass('selected')) {
+                $(this).removeClass('selected');
+            }
+            else {
+                dataTable.$('tr.selected').removeClass('selected');
+                $(this).addClass('selected');
+                var pos = dataTable.row(this).index();
+                var row = dataTable.row(pos).data();
+
+                $('#ProductCode').val(row['ProductCode']);
+                $('#ProductName').val(row['ProductName']);
+                $('#AssetIDPrefix').val(row['AssetIDPrefix']);
+
+                $("#searchModal").modal('toggle');
+               
+            }
+
+        });
+    });
+
+
+
+</script>
+
+
+
+

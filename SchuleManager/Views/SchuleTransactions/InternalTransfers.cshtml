@@ -1,0 +1,666 @@
+﻿@model SchuleManager.Models.InternalTransfersViewModel
+@{
+    ViewBag.Title = "Internal Transfers";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<style type="text/css">
+    .moneyInputDR {
+        text-align: right;
+        color: red;
+    }
+    .moneyInputCR {
+        text-align: right;
+        color: blue;
+    }
+    .moneyInput {
+        text-align: right;
+    }
+    .amountPaidInput {
+        text-align: right;
+    }
+
+    /* Chrome, Safari, Edge, Opera */
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    /* Firefox */
+    input[type=number] {
+        -moz-appearance: textfield;
+    }
+</style>
+
+<script src="~/Scripts/accounting.min.js"></script>
+
+<script type="text/javascript">
+
+    $(document).ready(function() {
+        $(".datePickers").datepicker({
+            dateFormat: 'dd-mm-yy'
+        });
+
+        $('#AccountType').change(function() {
+            resetInputs();
+        });
+
+        //Gets entered accounts details and returns pop up search modal incase of F2 press
+        $('#InternalTransfer_AccountID').on('input keydown', function (event) {
+
+            var data;
+            var keycode = event.keyCode || event.which;
+
+            if ($('#AccountType').val() === "S") {
+
+                if (keycode === 113) { //F2 key press
+
+                    return helpAccountSearch($('#AccountType').val());
+
+                } else {
+                    data = {
+                        accountId: $(this).val(),
+                        accountType: 'C'
+                    };
+
+                    $.getJSON("GetAccountDetails",
+                        data,
+                        function(json) {
+                            if (json.length) {
+                                $('#AccountDetails_ClearBalance').val(formatNumbers(json[0].ClearBalance));
+                                $('#AccountDetails_LienAmount').val(formatNumbers(json[0].LienAmount));
+                                $('#AccountDetails_FrozenAmount').val(formatNumbers(json[0].FrozenAmount));
+                                $('#CashTransaction_AccountName').val(json[0].AccountName);
+                                $('#CashTransaction_ProductCode').val(json[0].ProductCode);
+                                $('#ProductName').val(json[0].ProductName);
+                                $('#AccountDetails_UnSupervisedCredit').val(formatNumbers(json[0].UnSupervisedCredit));
+                                $('#AccountDetails_UnSupervisedDebit').val(formatNumbers(json[0].UnSupervisedDebit));
+
+                                $('#btnSaveTransaction, #btnCancelTransaction').removeAttr("disabled");
+                            }
+                        });
+                }
+
+            } else {
+
+                if (keycode === 113) { //F2 key press
+
+                    return helpGeneralSearch("G");
+
+                } else {
+                    data = {
+                        accountId: $(this).val(),
+                        accountType: 'G'
+                    };
+
+                    $.getJSON("GetAccountDetails",
+                        data,
+                        function(json) {
+                            if (json.length) {
+                                $('#AccountDetails_ClearBalance').val(formatNumbers(json[0].ClearBalance));
+                                $('#AccountDetails_LienAmount').val(0);
+                                $('#AccountDetails_FrozenAmount').val(0);
+                                $('#CashTransaction_AccountName').val(json[0].AccountName);
+                                $('#CashTransaction_ProductCode').val('GL');
+                                $('#ProductName').val('GENERAL LEDGER');
+                                $('#AccountDetails_UnSupervisedCredit').val(formatNumbers(json[0].UnSupervisedCredit));
+                                $('#AccountDetails_UnSupervisedDebit').val(formatNumbers(json[0].UnSupervisedDebit));
+
+                                $('#btnSaveTransaction, #btnCancelTransaction').removeAttr("disabled");
+                            }
+                        });
+                }
+            }
+
+
+            return null;
+        });
+
+        //When Account Search Modal is closed, save and cancel buttons are enabled
+        $("#searchModal").on("hidden.bs.modal", function () {
+            if ($('#InternalTransfer_AccountID').val() !== "" && $('#InternalTransfer_AccountName').val() !== "") {
+                $('#btnSaveTransaction, #btnCancelTransaction').removeAttr("disabled");
+            }
+        });
+
+        $('#PartTranType').change(function() {
+            if ($('#InternalTransfer_TranCode').val() === "003") {
+                $('#InternalTransfer_TranCode').val("004");
+                $('#InternalTransfer_TranCodeDescription').val("TRANSFER DEBIT");
+            } else {
+                $('#InternalTransfer_TranCode').val("003");
+                $('#InternalTransfer_TranCodeDescription').val("TRANSFER CREDIT");
+            }
+        });
+
+        $('#InternalTransfer_TranRemarks, #InternalTransfer_TranAmount').on('input', function () {
+            if ($('#validationMessage').text() !== "") {
+                $('#validationMessage').text('');
+            }           
+        });
+
+        $('#DebitAmount').val(0);
+
+        $('#CreditAmount').val(0);
+
+        $('#UnpostedAmount').val(0);
+    });
+
+    //clears all the inputs
+    function resetInputs() {
+        $('#InternalTransfer_AccountID').val('');
+        $('#InternalTransfer_AccountName').val('');
+        $('#InternalTransfer_ProductCode').val('');
+        $('#ProductName').val('');
+        $('#InternalTransfer_TranRemarks').val('');
+        $('#InternalTransfer_ReceiptNo').val('');
+        $('#InternalTransfer_TranAmount').val(0);
+        $('#AccountDetails_ClearBalance').val(0);
+        $('#AccountDetails_LienAmount').val(0);
+        $('#AccountDetails_FrozenAmount').val(0);
+        $('#AccountDetails_UnSupervisedCredit').val(0);
+        $('#AccountDetails_UnSupervisedDebit').val(0);
+    }
+
+    //applies accounting number formats
+    function formatNumbers(amount) {
+
+        return accounting.formatMoney(amount,
+            {
+                symbol: "",
+                precision: 2,
+                thousand: ",",
+                format: {
+                    pos: "%s %v",
+                    neg: "%s (%v)",
+                    //zero: "%s  --"
+                    zero: "0"
+                }
+            });
+    }
+
+    //removes accounting number formats
+    function removeNumberFormats(amount) {
+
+        return accounting.unformat(amount);
+    }
+
+</script>
+
+<div class="row">
+    <div class="col-md-12">
+        <h2>Internal Transfers</h2>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-10">
+        <div class="panel panel-default" id="transactionDetails-panel">
+            <div class = "panel-heading">
+                Transaction Details
+            </div>
+            <div class="panel-body">
+                <div class="row">
+                    <div class="col-md-2">
+                        @Html.Label("Part Transaction Type:", new {@class = "control-label"})
+                    </div>
+                    <div class="col-md-3">
+                        @Html.DropDownList("PartTranType", new List<SelectListItem> {new SelectListItem {Text = @"CREDIT", Value = "C"}, new SelectListItem {Text = @"DEBIT", Value = "D"}}, new {@class = "form-control"})
+                    </div>
+                    <div class="col-md-2">
+                        @Html.Label("Account Type:", new {@class = "control-label"})
+                    </div>
+                    <div class="col-md-3">
+                        @Html.DropDownList("AccountType", new List<SelectListItem> {new SelectListItem {Text = @"SAVINGS", Value = "S"}, new SelectListItem {Text = @"GENERAL LEDGER", Value = "G"}}, new {@class = "form-control"})
+                    </div>
+                </div>
+                <br/>
+                <div class="row">
+                    <div class="col-md-2">
+                        @Html.Label("Account ID:", new {@class = "control-label manadatory"})
+                    </div>
+                    <div class="col-md-3">
+                        @Html.TextBoxFor(model => model.InternalTransfer.AccountID, new {@class = "form-control"})
+                    </div>
+                    <div class="col-md-5">
+                        @Html.TextBoxFor(model => model.InternalTransfer.AccountName, new {@class = "form-control", disabled = true})
+                    </div>
+                </div>
+                <br/>
+                <div class="row">
+                    <div class="col-md-2">
+                        @Html.Label("Product:", new {@class = "control-label"})
+                    </div>
+                    <div class="col-md-3">
+                        @Html.TextBoxFor(model => model.InternalTransfer.ProductCode, new {@class = "form-control", disabled = true})
+                    </div>
+                    <div class="col-md-5">
+                        @Html.TextBox("ProductName", null, new {@class = "form-control", disabled = true})
+                    </div>
+                </div>
+                <br/>
+                <div class="row">
+                    <div class="col-md-2">
+                        @Html.Label("Receipt#:", new {@class = "control-label"})
+                    </div>
+                    <div class="col-md-3">
+                        @Html.TextBoxFor(model => model.InternalTransfer.ReceiptNo, new {@class = "form-control"})
+                    </div>
+                    <div class="col-md-2">
+                        @Html.Label("Value Date:", new {@class = "control-label"})
+                    </div>
+                    <div class="col-md-3">
+                        @Html.TextBoxFor(model => model.InternalTransfer.ValueDate, new {@class = "form-control datePickers"})
+                    </div>
+                </div>
+                <br/>
+                <div class="row">
+                    <div class="col-md-2">
+                        @Html.Label("Transaction Code:", new {@class = "control-label manadatory"})
+                    </div>
+                    <div class="col-md-3">
+                        @Html.TextBoxFor(model => model.InternalTransfer.TranCode, new {@class = "form-control", disabled = true})
+                    </div>
+                    <div class="col-md-5">
+                        @Html.TextBoxFor(model => model.InternalTransfer.TranCodeDescription, new {@class = "form-control", disabled = true})
+                    </div>
+                </div>
+                <br/>
+                <div class="row">
+                    <div class="col-md-2">
+                        @Html.Label("Transaction Remarks:", new {@class = "control-label manadatory"})
+                    </div>
+                    <div class="col-md-8">
+                        @Html.TextBoxFor(model => model.InternalTransfer.TranRemarks, new {@class = "form-control"})
+                    </div>
+                </div>
+                <br/>
+                <div class="row">
+                    <div class="col-md-2">
+                        @Html.Label("Amount:", new {@class = "control-label manadatory"})
+                    </div>
+                    <div class="col-md-3">
+                        @Html.TextBoxFor(model => model.InternalTransfer.TranAmount, new {@class = "form-control moneyInput", type = "number", onkeypress = "return event.charCode >= 48 && event.charCode <= 57"})
+                    </div>
+                    <div class="col-md-5">
+                        <p id="validationMessage" style="color: red"></p>
+                    </div>
+                </div>
+            </div>           
+            <div class="panel-heading">
+                Account Details
+            </div>
+            <div class="panel-body">
+                <div class="row">
+                    <div class="col-md-2">
+                        @Html.Label("Clear Balance:", new {@class = "control-label"})
+                    </div>
+                    <div class="col-md-3">
+                        @Html.TextBoxFor(model => model.AccountDetails.ClearBalance, new {@class = "form-control moneyInput", disabled = true})
+                    </div>
+                    <div class="col-md-2">
+                        @Html.Label("Lien Amount:", new {@class = "control-label"})
+                    </div>
+                    <div class="col-md-3">
+                        @Html.TextBoxFor(model => model.AccountDetails.LienAmount, new {@class = "form-control moneyInput", disabled = true})
+                    </div>
+                </div>
+                <br/>
+                <div class="row">
+                    <div class="col-md-2">
+                        @Html.Label("Available Balance:", new {@class = "control-label"})
+                    </div>
+                    <div class="col-md-3">
+                        @Html.TextBoxFor(model => model.AccountDetails.ClearBalance, new {@class = "form-control moneyInput", disabled = true})
+                    </div>
+                    <div class="col-md-2">
+                        @Html.Label("Frozen Amount:", new {@class = "control-label"})
+                    </div>
+                    <div class="col-md-3">
+                        @Html.TextBoxFor(model => model.AccountDetails.FrozenAmount, new {@class = "form-control moneyInput", disabled = true})
+                    </div>
+                </div>
+                <br/>
+                <div class="row">
+                    <div class="col-md-2">
+                        @Html.Label("Unsupervised Credit:", new {@class = "control-label"})
+                    </div>
+                    <div class="col-md-3">
+                        @Html.TextBoxFor(model => model.AccountDetails.UnSupervisedCredit, new {@class = "form-control moneyInputCR", disabled = true})
+                    </div>
+                    <div class="col-md-2">
+                        @Html.Label("Unsupervised Debit:", new {@class = "control-label"})
+                    </div>
+                    <div class="col-md-3">
+                        @Html.TextBoxFor(model => model.AccountDetails.UnSupervisedDebit, new {@class = "form-control moneyInputDR", disabled = true})
+                    </div>
+                </div>
+                <br/>
+            </div>
+            <div class="panel-heading">
+                Part Transaction Details
+            </div>
+            <div class="panel-body">
+                <div class="row">
+                    <div class="col-md-1">
+                        @Html.Label("DR:", new { @class = "control-label" })
+                    </div>
+                    <div class="col-md-2">
+                        @Html.TextBox("DebitAmount", null, new { @class = "form-control moneyInputDR", disabled = true })
+                    </div>
+                    <div class="col-md-1">
+                        @Html.Label("CR:", new { @class = "control-label" })
+                    </div>
+                    <div class="col-md-2">
+                        @Html.TextBox("CreditAmount", null, new { @class = "form-control moneyInputCR", disabled = true })
+                    </div>
+                    <div class="col-md-1">
+                        @Html.Label("Unposted:", new { @class = "control-label" })
+                    </div>
+                    <div class="col-md-2">
+                        @Html.TextBox("UnpostedAmount", null, new { @class = "form-control moneyInputDR", disabled = true })
+                    </div>
+                    <div class="col-md-1">
+                        <button style="width: 100%" class="btn" id="btnAddPartTransaction">Add</button>
+                    </div>
+                </div>
+                <br/>
+                <div class="row">
+                    <div class="col-md-10">
+                        <table id="transactionDetails" class="table table-striped table-bordered" style="width: 100%; border: 1px solid black; padding: 3px">
+                            <caption>Transaction Details</caption>
+                            <thead>
+                            <tr>
+                                <th>Serial No.</th>
+                                <th>Value Date</th>
+                                <th>Account ID</th>
+                                <th style="display: none">AccountType</th>
+                                <th>Product</th>
+                                <th>Trx Type</th>
+                                <th style="display: none">TrxCode</th>
+                                <th style="display: none">TrxParticulars</th>
+                                <th>Receipt No.</th>
+                                <th>Amount</th>
+                                <th>Transaction Remarks</th>
+                            </tr>
+                            </thead>
+                            <tbody></tbody>
+                            <tfoot></tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="panel panel-default" id="buttons-panel" style="height: 897px">
+            <input id="SystemDate" value="@ViewBag.SystemDate" type="hidden" />
+            <br />
+            <div class="row">
+                <button style="width: 100%" class="btn btn-success" id="btnSaveTransaction" disabled="disabled">Save</button>
+            </div>
+            <br />
+            <div class="row">
+                <button style="width: 100%" class="btn btn-danger" id="btnCancelTransaction" disabled="disabled">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="searchModal" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Search</h4>
+            </div>
+            <div class="modal-body" id="searchContent">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="messageModal" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body" id="messageContent">
+                <p id="message"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+
+    var serialNo = 0;
+
+    var unpostedAmount;
+
+    //Returns Modal with all student Account details
+    function helpAccountSearch(acctType) {
+        var url = '@Url.Content("~/")' + "Search/HelpAccountSearch";
+        $.ajax({
+            type: "POST",
+            url: url,
+            data: '{accountType: "' + acctType + '" }',
+            contentType: "application/json; charset=utf-8",
+            dataType: "html",
+            success: function(response) {
+                $('#searchContent').html(response);
+                $('#searchModal').modal('show');
+            },
+            failure: function() {
+                $('#searchContent').text(response.message);
+                $('#searchModal').modal('show');
+            }
+        });
+    }
+
+    function helpGeneralSearch(flag) {
+        var url = '@Url.Content("~/")' + "Search/HelpGeneralSearch";
+        $.ajax({
+            type: "POST",
+            url: url,
+            data: '{searchFlag: "' + flag + '" }',
+            contentType: "application/json; charset=utf-8",
+            dataType: "html",
+            success: function (response) {
+                $('#searchContent').html(response);
+                $('#searchModal').modal('show');
+            },
+            failure: function () {
+                $('#searchContent').text(response.message);
+                $('#searchModal').modal('show');
+            }
+        });
+    }
+
+    $('#btnAddPartTransaction').click(function(e) {
+        e.preventDefault();
+
+        if ($('#InternalTransfer_AccountName').val() !== "" &&
+            $('#InternalTransfer_TranRemarks').val() !== "" &&
+            parseInt($('#InternalTransfer_TranAmount').val(), 10) > 0) {
+
+            var tranAmount = parseInt($('#InternalTransfer_TranAmount').val(), 10);
+
+            serialNo++;
+
+            var tr = $('<tr class=data-row />');
+
+            tr.append("<td>" + serialNo + "</td>");
+            tr.append("<td>" + $('#InternalTransfer_ValueDate').val() + "</td>");
+            tr.append("<td>" + $('#InternalTransfer_AccountID').val() + "</td>");
+            tr.append("<td>" + $('#AccountType').val() + "</td>");
+            tr.append("<td>" + $('#InternalTransfer_ProductCode').val() + "</td>");
+            tr.append("<td>" + $('#PartTranType').val() + "</td>");
+            tr.append("<td>" + $('#InternalTransfer_TranCode').val() + "</td>");
+            tr.append("<td>" + $('#InternalTransfer_TranCodeDescription').val() + "</td>");
+            tr.append("<td>" + $('#InternalTransfer_ReceiptNo').val() + "</td>");
+            tr.append("<td>" + formatNumbers($('#InternalTransfer_TranAmount').val()) + "</td>");
+            tr.append("<td>" + $('#InternalTransfer_TranRemarks').val() + "</td>");
+
+            $('#transactionDetails tbody').append(tr);
+
+            if ($('#PartTranType').val() === "D") {
+
+                var debitAmount = parseInt($('#DebitAmount').val(), 10);
+
+                debitAmount += tranAmount;
+
+                $('#DebitAmount').val(debitAmount);
+
+                unpostedAmount = parseInt($('#UnpostedAmount').val(), 10);
+
+                unpostedAmount -= tranAmount;
+
+                $('#InternalTransfer_TranCode').val('003');
+
+                $('#InternalTransfer_TranCodeDescription').val('TRANSFER CREDIT');
+
+            } else {
+
+                var creditAmount = parseInt($('#CreditAmount').val(), 10);
+
+                creditAmount += tranAmount;
+
+                $('#CreditAmount').val(creditAmount);
+
+                unpostedAmount = parseInt($('#UnpostedAmount').val(), 10);
+
+                unpostedAmount += tranAmount;
+
+                $('#InternalTransfer_TranCode').val('004');
+
+                $('#InternalTransfer_TranCodeDescription').val('TRANSFER DEBIT');
+                
+            }
+
+            resetInputs();
+
+
+        } else if ($('#InternalTransfer_AccountName').val() === "") {
+            $('#validationMessage').text('Please select an account');
+            $('#InternalTransfer_AccountID').focus();
+        } else if ($('#InternalTransfer_TranRemarks').val() === "") {
+            $('#validationMessage').text('Please enter transaction remarks');
+            $('#InternalTransfer_TranRemarks').focus();
+        } else {
+            $('#validationMessage').text('Please enter transaction amount');
+            $('#InternalTransfer_TranAmount').focus();
+        }
+        
+
+        return false;
+    });
+
+
+    $('#btnSaveTransaction').click(function(e) {
+
+        e.preventDefault();
+
+        if ($('#transactionDetails tr').length > 1) {
+
+            if (parseInt($('#DebitAmount').val(), 10) === parseInt($('#CreditAmount').val(), 10)) {
+                var transferTransactions = [];
+                var table = $("#transactionDetails tbody");
+
+                table.find('tr').each(function() {
+
+                    var serialNo = parseInt($(this).find("td:eq(0)").text(), 10);
+                    var valueDate = $(this).find("td:eq(1)").text();
+                    var accountId = $(this).find("td:eq(2)").text();
+                    var accountType = $(this).find("td:eq(3)").text();
+                    var product = $(this).find("td:eq(4)").text();
+                    var trxtype = $(this).find("td:eq(5)").text();
+                    var trxCode = $(this).find("td:eq(6)").text();
+                    var trxParticulars = $(this).find("td:eq(7)").text();
+                    var receiptNo = $(this).find("td:eq(8)").text();
+                    var tranAmount = parseInt($(this).find("td:eq(9)").text(), 10);
+                    var tranRemarks = $(this).find("td:eq(10)").text();
+
+                    if (tranAmount > 0) {
+
+                        transferTransactions.push({
+                            ColumnID: serialNo,
+                            ValueDate: valueDate,
+                            AccountID: accountId,
+                            AccountType: accountType,
+                            ProductCode: product,
+                            PartTranType: trxtype,
+                            ReceiptNo: receiptNo,
+                            TranAmount: tranAmount,
+                            TranCode: trxCode,
+                            TranParticulars: trxParticulars,
+                            TranRemarks: tranRemarks,
+                            FeeCode: null,
+                            BillID: null,
+                            TermID: null,
+                            BankSlip: null,
+                            isRev: false,
+                            RevTranDate: null,
+                            RevTranID: null,
+                            RevTranSerialNo: null
+                        });
+                    }
+                });
+
+                $.ajax({
+                    type: "POST",
+                    url: '@Url.Action("AddEditTransactions", "SchuleTransactions")',
+                    data: {
+                        tranType: 'T',
+                        tranCat: 'T',
+                        trans: transferTransactions,
+                        action: 'A'
+                    },
+                    dataType: "json",
+                    success: function(response) {
+                        if (response) {
+                            $('#message').text(response.message);
+                            $('#messageModal').modal('show');
+                        }
+                    }
+                }).done(function() {
+
+                    resetInputs();
+
+                    $('#btnSaveTransaction, #btnCancelTransaction').attr("disabled", "disabled");
+
+                });
+            } else {
+                $('#validationMessage').text('Debit and Credit Amounts are not balanced');
+
+                $('#DebitAmount').focus();
+            }
+          
+        } else {
+            $('#validationMessage').text('Please Enter Complete Transaction before saving');
+
+            $('#InternalTransfer_AccountID').focus();
+        }
+
+        return false;
+
+    });
+
+    $('#btnCancelTransaction').click(function (e) {
+        e.preventDefault();
+
+        resetInputs();
+
+        $('#btnSaveTransaction, #btnCancelTransaction').attr("disabled", "disabled");
+
+        return false;
+    });
+
+
+</script>

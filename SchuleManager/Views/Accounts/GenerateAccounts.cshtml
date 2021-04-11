@@ -1,0 +1,438 @@
+﻿
+@{
+    ViewBag.Title = "Generate Accounts";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style type="text/css">
+    h4 {
+        width: 100%;
+        text-align: center;
+        border-bottom: 1px solid #000;
+        line-height: 0.1em;
+        margin: 10px 0 20px;
+    }
+
+    h4 span {
+        background: #fff;
+        padding: 0 10px;
+    }
+</style>
+
+<link href="~/Scripts/dataTablesScripts/dataTables.bootstrap.min.css" rel="stylesheet" />
+<link href="~/Content/jquery.dataTables.css" rel="stylesheet" />
+<script src="~/Scripts/dataTablesScripts/jquery.dataTables.min.js"></script>
+
+<script type="text/javascript">
+
+    var studentListingTableDataTable;
+
+    $(document).ready(function() {
+
+        //Gets entered product details and returns pop up search modal incase of F2 press
+        $('#ProductCode').on('input keydown', function (event) {
+
+            var data;
+            var keycode = event.keyCode || event.which;
+
+            if (keycode === 113 && $('#ClientType').val() !== "") { //F2 key press
+
+                return helpClientProductSearch();
+
+            } else if (keycode === 8) { //Backspace key
+                $('#ProductName').val('');
+            }
+            else {
+                data = {
+                    productCode: $(this).val()
+                };
+
+                $.getJSON("GetProductDetails", data, function (json) {
+
+                    if (json.length) {
+
+                        $('#ProductName').val(json[0].ProductName);
+
+                        if ($('#ClientType').val() !== "" && $('#ProductName').val() !== "") {
+
+                            if (typeof studentListingTableDataTable !== 'undefined' && studentListingTableDataTable !== null) {
+
+                                studentListingTableDataTable.ajax.reload(function() {
+                                    
+                                    if (!studentListingTableDataTable.data().any()) {
+                                        $('#btnGenerateAccounts').attr('disabled', 'disabled');
+                                    } else {
+                                        $('#btnGenerateAccounts').removeAttr('disabled');
+                                    }
+
+                                });
+                            } else {
+
+                                loadStudentListing();
+
+                            }
+
+                        }
+                    }
+
+                });
+            }
+
+            return null;
+        });
+
+        //When Product Search Modal is closed, save and cancel buttons are enabled
+        $("#searchModal").on("hidden.bs.modal", function () {
+
+            if ($('#ClientType').val() !== "" && $('#ProductName').val() !== "") {
+
+                if (typeof studentListingTableDataTable !== 'undefined' && studentListingTableDataTable !== null) {
+
+                    studentListingTableDataTable.ajax.reload(function () {
+
+                        if (!studentListingTableDataTable.data().any()) {
+                            $('#btnGenerateAccounts').attr('disabled', 'disabled');
+                        } else {
+                            $('#btnGenerateAccounts').removeAttr('disabled');
+                        }
+                    });
+
+                } else {
+
+                    loadStudentListing();
+
+                }
+
+            }
+        });
+
+        $('#ClientType').focus();
+
+        $('#ClientType').change(function() {
+
+            if ($(this).val() !== "") {
+                $('#ProductCode').removeAttr('disabled');
+                $('#ProductCode, #ProductName').val('');
+            } else {
+                $('#ProductCode').attr('disabled', 'disabled');
+                $('#ProductCode, #ProductName').val('');
+            }
+
+        });
+
+    });
+    
+    function loadStudentListing() {
+
+        studentListingTableDataTable = $("#studentListingTable").DataTable({
+            "processing": true, // for show progress bar
+            "serverSide": true, // for process server side
+            "filter": true, // this is for disable filter (search box)
+            "orderMulti": false, // for disable multiple column at once
+            "ajax": {
+                "url": "/SchuleManager/Accounts/LoadClientWithoutAccounts",
+                "type": "POST",
+                "datatype": "json",
+                "data": function (d) {
+                    d.clientType = $('#ClientType').val();
+                    d.productCode = $('#ProductCode').val();
+                }
+            },
+            "initComplete": function () {
+                if (!studentListingTableDataTable.data().any()) {
+                    $('#btnGenerateAccounts').attr('disabled', 'disabled');
+                } else {
+                    $('#btnGenerateAccounts').removeAttr('disabled');
+                }
+            },
+            "columnDefs":
+            [
+                {
+                    "targets": [0],
+                    "visible": true,
+                    "searchable": true,
+                    "orderable": true
+                },
+                {
+                    "targets": [1],
+                    "visible": true,
+                    "searchable": true,
+                    "orderable": false
+                },
+                {
+                    "targets": [2],
+                    "visible": true,
+                    "searchable": true,
+                    "orderable": false
+                },
+                {
+                    "targets": [3],
+                    "visible": true,
+                    "searchable": false,
+                    "orderable": true
+                }
+            ],
+            "columns": [
+                { "data": "StudentID", "name": "StudentID", "autoWidth": true },
+                { "data": "SurName", "name": "SurName", "autoWidth": true },
+                { "data": "OtherNames", "name": "OtherNames", "autoWidth": true },
+                { "data": "ClassCode", "name": "ClassCode", "autoWidth": true }
+            ]
+
+        });
+
+
+        $('#studentListingTable tbody').on('click', 'tr', function () {
+
+            $(this).toggleClass('selected');
+
+            if (studentListingTableDataTable.rows('.selected').any()) {
+                $('#validationMessage').text('');
+            }
+        });
+    }
+
+</script>
+
+<div class="row">
+    <div class="col-md-12">
+        <h2>Generate Accounts</h2>
+    </div>
+</div><div class="row">
+    <div class="col-md-12">
+        <div class="panel panel-default" id="clientSearch-panel" style="padding: 10px;">
+            <h4><span>Search Clients Without Accounts</span></h4>
+            <div class="row">
+                <div class="col-md-2">
+                    @Html.Label("Schule Client:", new {@class = "control-label"})
+                </div>
+                <div class="col-md-3">
+                    @Html.DropDownList("ClientType", new List<SelectListItem> {new SelectListItem {Text = @"STUDENT", Value = "S"}, new SelectListItem {Text = @"EMPLOYEE", Value = "E"}, new SelectListItem {Text = @"SUPPLIER", Value = "S"}} , "- Select Client Type -", new {@class = "form-control"})
+                </div>
+                <div class="col-md-2">
+                    @Html.Label("Product:", new {@class = "control-label"})
+                </div>
+                <div class="col-md-2">
+                    @Html.TextBox("ProductCode", null, new { @class = "form-control", disabled = true })
+                </div>
+                <div class="col-md-3">
+                    @Html.TextBox("ProductName", null, new { @class = "form-control", disabled = true })
+                </div>
+            </div>
+        </div>
+        <div class="panel panel-default" id="clientListing-panel" style="padding: 10px;">
+            <h4><span>Client Listing</span></h4>
+            <div class="row">
+                <div class="col-md-12">  
+                    <div class="panel-body">
+                        <table id="studentListingTable" class="table table-striped table-bordered nowrap" style="width: 100%">
+                            <thead>
+                            <tr>
+                                <th>Student ID</th>
+                                <th>Surname</th>
+                                <th>Othernames</th>
+                                <th>Class</th>
+                            </tr>
+                            </thead>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="panel panel-default" id="buttons-panel" style="padding: 10px;">
+                <div class="row">
+                    <div class="col-md-3">
+                        <button style="width: 100%" class="btn btn-info" id="btnGenerateAccounts" disabled="disabled">Generate Account(s)</button>
+                    </div>
+                    <div class="col-md-3">
+                        <button style="width: 100%" class="btn btn-danger" id="btnCancel"  disabled="disabled">Cancel</button>
+                    </div>
+                    <div class="col-md-1">
+                        <input id="SystemDate" value="@ViewBag.SystemDate" type="hidden" />
+                    </div>
+                    <div class="col-md-5">
+                        <p id="validationMessage" style="color: red"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="searchModal" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Search</h4>
+            </div>
+            <div class="modal-body" id="searchContent">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="messageModal" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body" id="messageContent">
+                <p id="message"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="confirmModal" class="modal fade" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="myModalLabel">Generate Accounts</h3>
+            </div>
+            <div class="modal-body">
+                <p>You are about to generate accounts for all currently displayed clients, Are you sure that you want to continue?</p>
+            </div>
+            <div class="modal-footer">
+                <button id="btnConfirm" class="btn btn-primary">Yes</button>
+                <button id="btnCancelGenerate" class="btn" data-dismiss="modal" aria-hidden="true">No, Cancel</button>
+            </div>
+        </div>
+    </div>    
+</div>
+
+<script type="text/javascript">
+    
+    function helpClientProductSearch() {
+        var url = '@Url.Content("~/")' + "Search/HelpClientTypeProductSearch";
+        $.ajax({
+            type: "POST",
+            url: url,
+            data: '{clientType: "' + $('#ClientType').val() + '" }',
+            contentType: "application/json; charset=utf-8",
+            dataType: "html",
+            success: function (response) {
+
+                $('#searchContent').html(response);
+                $('#searchModal').modal('show');
+            }
+        });
+    };
+
+    $('#btnGenerateAccounts').click(function(e) {
+
+        e.preventDefault();
+
+        var numberOfSelectedRows = studentListingTableDataTable.rows('.selected').count();
+
+        var clients = new Array();
+        var arrayIndex = 0;
+
+        var clientsString = "";
+
+        if (numberOfSelectedRows === 0) {
+
+            $('#confirmModal').modal('show');
+
+            $('#btnConfirm').click(function () {
+
+                $('#confirmModal').modal('hide');            
+
+                $('#studentListingTable > tbody  > tr').each(function() {
+
+                    var pos = studentListingTableDataTable.row(this).index();
+                    var row = studentListingTableDataTable.row(pos).data();
+
+                    clients[arrayIndex] = row["StudentID"];
+                    arrayIndex++;
+
+                });
+
+                clientsString = clients.join();
+
+                $.ajax({
+                    type: "POST",
+                    url: '@Url.Action("GenerateAccounts", "Accounts")',
+                    data: {
+                        clients: clientsString,
+                        productCode: $('#ProductCode').val(),
+                        openDate: $('#SystemDate').val()
+                    },
+                    dataType: "json",
+                    success: function (response) {
+                        if (response) {
+
+                            studentListingTableDataTable.ajax.reload(function () {
+
+                                if (!studentListingTableDataTable.data().any()) {
+                                    $('#btnGenerateAccounts').attr('disabled', 'disabled');
+                                } else {
+                                    $('#btnGenerateAccounts').removeAttr('disabled');
+                                }
+                            });
+
+                            $('#message').text(response.message);
+                            $('#messageModal').modal('show');
+                        }
+                    }
+                });
+                
+            });
+
+        } else if (numberOfSelectedRows > 0) {
+            
+            $('#studentListingTable > tbody  > tr').each(function () {
+
+                if ($(this).hasClass("selected")) {
+                    
+                    var pos = studentListingTableDataTable.row(this).index();
+                    var row = studentListingTableDataTable.row(pos).data();
+
+                    clients[arrayIndex] = row["StudentID"];
+                    arrayIndex++;
+
+                }
+            });
+
+            clientsString = clients.join();
+
+            $.ajax({
+                type: "POST",
+                url: '@Url.Action("GenerateAccounts", "Accounts")',
+                data: {
+                    clients: clientsString,
+                    productCode: $('#ProductCode').val(),
+                    openDate: $('#SystemDate').val()
+                },
+                dataType: "json",
+                success: function (response) {
+                    if (response) {
+
+                        studentListingTableDataTable.ajax.reload(function () {
+
+                            if (!studentListingTableDataTable.data().any()) {
+                                $('#btnGenerateAccounts').attr('disabled', 'disabled');
+                            } else {
+                                $('#btnGenerateAccounts').removeAttr('disabled');
+                            }
+                        });
+
+                        $('#message').text(response.message);
+                        $('#messageModal').modal('show');
+                    }
+                }
+            });
+        }
+
+        return false;
+    });
+
+
+</script>
+

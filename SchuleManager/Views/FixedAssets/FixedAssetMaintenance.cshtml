@@ -1,0 +1,675 @@
+﻿@model SchuleManager.Models.FixedAssets
+@{
+    ViewBag.Title = "Fixed Asset Maintenance";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<script src="~/Scripts/accounting.min.js"></script>
+
+<style type="text/css">
+    
+    h4 {
+        width: 100%;
+        text-align: left;
+        border-bottom: 1px solid #000;
+        line-height: 0.1em;
+        margin: 10px 0 20px;
+        color: red
+    }
+
+    h4 span {
+        background: #fff;
+        padding: 0 10px;
+    }
+
+    .moneyInput {
+        text-align: right;
+    }
+
+    /* Chrome, Safari, Edge, Opera */
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    /* Firefox */
+    input[type=number] {
+        -moz-appearance: textfield;
+    }
+
+</style>
+
+<script type="text/javascript">
+    
+    $(document).ready(function () {
+
+        //Gets entered product details and returns pop up search modal incase of F2 press
+        $('#ProductCode').on('input keydown', function (event) {
+
+            var keycode = event.keyCode || event.which;
+
+            if (keycode === 113) { //F2 key press
+
+                return helpGeneralSearch('F');
+
+            } else if (keycode === 8) { //Backspace key
+                $('#ProductName').val('');
+                $('#AssetIDPrefix').val('');
+            }
+            else {
+                var data = {
+                    productCode: $(this).val()
+                };
+
+                $.getJSON("GetFixedAssetProductDetails", data, function (json) {
+
+                    if (json.length) {
+
+                        $('#ProductName').val(json[0].ProductName);
+                        $('#AssetIDPrefix').val(json[0].AccountPrefix);
+                    }
+
+                });
+            }
+
+            return null;
+        });
+
+        //Gets entered accounts details and returns pop up search modal incase of F2 press
+        $('#AssetID').on('input keydown', function (event) {
+
+            var data;
+            var keycode = event.keyCode || event.which;
+
+            if (keycode === 113) { //F2 key press
+
+                return helpSchuleAccountSearch();
+
+            } else {
+                data = {
+                    assetId: $(this).val()
+                };
+
+                $.getJSON("GetFixedAssetDetails", data, function (json) {
+
+                    if (json.length) {
+                        $('#ProductCode').val(json[0].ProductCode);
+                        $('#ProductName').val(json[0].ProductName);
+                        $('#AssetIDPrefix').val(json[0].AssetIDPrefix);
+                        $('#Description').val(json[0].Description);
+                        $('#SupplierID').val(json[0].SupplierID);
+                        $('#SerialNo').val(json[0].SerialNo);
+                        $('#TagNo').val(json[0].TagNo);
+                        $('#BrandName').val(json[0].BrandName);
+                        $('#Location').val(json[0].Location);
+                        $('#DepMthd').val(json[0].DepMthd);
+                        $('#DepRate').val(json[0].DepRate);
+                        $('#CostPrice').val(formatNumbers(json[0].CostPrice));
+                        $('#Terms').val(json[0].Terms);
+                        $('#PurchasedOn').val(json[0].PurchasedOn);
+                        $('#DepFrom').val(json[0].DepFrom);
+                        $('#NetBookValue').val(formatNumbers(json[0].NetBookValue));
+                        $('#AccumDep').val(formatNumbers(json[0].AccumDep));
+                        $('#RemainingTerms').val(json[0].RemainingTerms);
+
+                        if (json[0].IsVerified) {
+                            $('#btnVerify').attr("disabled", "disabled");
+                        }
+                        else {
+                            $('#btnVerify').removeAttr("disabled");
+                        }
+
+                        $('#btnEdit').removeAttr("disabled");
+                    }
+
+                });
+            }
+
+            return null;
+        });
+
+        //When asset Search Modal is closed, save and cancel buttons are enabled
+        $("#assetSearchModal").on("hidden.bs.modal", function () {
+
+            if ($('#AssetID').val() !== "" && $('#Description').val() !== "") {
+
+                var data = {
+                    assetId: $('#AssetID').val()
+                };
+
+                $.getJSON("GetFixedAssetDetails", data, function (json) {
+
+                    if (json.length) {
+                        $('#ProductCode').val(json[0].ProductCode);
+                        $('#ProductName').val(json[0].ProductName);
+                        $('#AssetIDPrefix').val(json[0].AssetIDPrefix);
+                        $('#SupplierID').val(json[0].SupplierID);
+                        $('#SerialNo').val(json[0].SerialNo);
+                        $('#TagNo').val(json[0].TagNo);
+                        $('#BrandName').val(json[0].BrandName);
+                        $('#Location').val(json[0].Location);
+                        $('#DepMthd').val(json[0].DepMthd);
+                        $('#DepRate').val(json[0].DepRate);
+                        $('#CostPrice').val(formatNumbers(json[0].CostPrice));
+                        $('#Terms').val(json[0].Terms);
+                        $('#PurchasedOn').val(json[0].PurchasedOn);
+                        $('#DepFrom').val(json[0].DepFrom);
+                        $('#NetBookValue').val(formatNumbers(json[0].NetBookValue));
+                        $('#AccumDep').val(formatNumbers(json[0].AccumDep));
+                        $('#RemainingTerms').val(json[0].RemainingTerms);
+
+                        if (json[0].IsVerified) {
+                            $('#btnVerify').attr("disabled", "disabled");
+                        }
+                        else {
+                            $('#btnVerify').removeAttr("disabled");
+                        }
+
+                        $('#btnEdit').removeAttr("disabled");
+                    }
+
+                });
+
+            }
+        });
+
+        $(".datePickers").datepicker({
+            dateFormat: 'dd-mm-yy'
+        });
+
+        $('#Terms').on('input change', function () {
+
+            if ($(this).val() !== '') {
+
+                var rate = (100 / $(this).val());
+
+                $('#DepRate').val(rate);
+
+            } else {
+                $('#DepRate').val(0);
+            }
+
+            if ($('#DepFrom').val() !== '') {
+                
+                var depfrom = new Date($('#DepFrom').val());
+                var terms = $('#Terms').val();
+
+                var depEnd = new Date(date.setMonth(depfrom + terms));
+
+                $('#DepEnd').val(depEnd);
+
+            }
+                
+        });
+
+        $('#CostPrice').on('blur', function () {
+            $(this).val(formatNumbers($(this).val()));
+        });
+
+    });
+
+    function helpGeneralSearch(flag) {
+        var url = '@Url.Content("~/")' + "Search/HelpGeneralSearch";
+        $.ajax({
+            type: "POST",
+            url: url,
+            data: '{searchFlag: "' + flag + '" }',
+            contentType: "application/json; charset=utf-8",
+            dataType: "html",
+            success: function (response) {
+                $('#searchContent').html(response);
+                $('#searchModal').modal('show');
+            },
+            failure: function () {
+                $('#searchContent').text(response.message);
+                $('#searchModal').modal('show');
+            }
+        });
+    }
+
+    function helpSchuleAccountSearch() {
+        var url = '@Url.Content("~/")' + "Search/HelpFixedAssetSearch";
+        $.ajax({
+            type: "POST",
+            url: url,
+            contentType: "application/json; charset=utf-8",
+            dataType: "html",
+            success: function (response) {
+                $('#assetSearchContent').html(response);
+                $('#assetSearchModal').modal('show');
+            }
+        });
+    };
+
+    function formatNumbers(amount) {
+        return accounting.formatMoney(amount,
+            {
+                symbol: "",
+                precision: 2,
+                thousand: ",",
+                format: {
+                    pos: "%s %v",
+                    neg: "%s (%v)",
+                    //zero: "%s  --"
+                    zero: "0"
+                }
+            });
+    }
+
+    //removes accounting number formats
+    function removeNumberFormats(amount) {
+
+        return accounting.unformat(amount);
+    }
+
+</script>
+
+<div class="row">
+    <div class="col-md-5">
+        <h2>Fixed Asset Maintenance</h2>
+    </div>
+    <div class="col-md-7">
+        <p id="validationMessage" style="color: red"></p>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-10">
+        <form class="form-horizontal">
+            <div class="panel panel-default">
+                <h4><span>Product Info:</span></h4>
+                <div class="panel-body">
+                    <div class="form-group row">
+                        @Html.Label("Product:", new {@class = "col-sm-2 col-form-label manadatory"})
+                        <div class="col-sm-3">
+                            @Html.TextBoxFor(model => model.ProductCode, null, new {@class = "form-control", disabled = true})
+                        </div>
+                        @Html.Label("AssetID Prefix:", new {@class = "col-sm-2 col-form-label"})
+                        <div class="col-sm-3">
+                            @Html.TextBoxFor(model => model.AssetIDPrefix, null, new {@class = "form-control", disabled = true})
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        @Html.Label("Product Name:", new {@class = "col-sm-2 col-form-label"})
+                        <div class="col-sm-8">
+                            @Html.TextBoxFor(model => model.ProductName, null, new {@class = "form-control", disabled = true})
+                        </div>
+                    </div>
+                </div>
+                <h4><span>Fixed Asset Details:</span></h4>
+                <div class="panel-body">
+                    <div class="form-group row">
+                        @Html.Label("Asset ID:", new {@class = "col-sm-2 col-form-label manadatory"})
+                        <div class="col-sm-3">
+                            @Html.TextBoxFor(model => model.AssetID, null, new {@class = "form-control"})
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        @Html.Label("Asset Description:", new {@class = "col-sm-2 col-form-label manadatory"})
+                        <div class="col-sm-8">
+                            @Html.TextBoxFor(model => model.Description, null, new {@class = "form-control", disabled = true, maxlength = 100})
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        @Html.Label("Supplier:", new {@class = "col-sm-2 col-form-label manadatory"})
+                        <div class="col-sm-8">
+                            @Html.DropDownListFor(model => model.SupplierID, null, "- Select Supplier -", new { @class = "form-control", disabled = true })
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        @Html.Label("Serial #:", new {@class = "col-sm-2 col-form-label"})
+                        <div class="col-sm-3">
+                            @Html.TextBoxFor(model => model.SerialNo, null, new { @class = "form-control", disabled = true })
+                        </div>
+                        @Html.Label("Tag No:", new {@class = "col-sm-2 col-form-label"})
+                        <div class="col-sm-3">
+                            @Html.TextBoxFor(model => model.TagNo, null, new { @class = "form-control", disabled = true })
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        @Html.Label("Brand Name:", new {@class = "col-sm-2 col-form-label"})
+                        <div class="col-sm-3">
+                            @Html.TextBoxFor(model => model.BrandName, null, new { @class = "form-control", disabled = true })
+                        </div>
+                        @Html.Label("Location:", new {@class = "col-sm-2 col-form-label manadatory"})
+                        <div class="col-sm-3">
+                            @Html.TextBoxFor(model => model.Location, null, new { @class = "form-control", disabled = true })
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        @Html.Label("Depn Method:", new {@class = "col-sm-2 col-form-label manadatory"})
+                        <div class="col-sm-3">
+                            @Html.DropDownListFor(model => model.DepMthd, new List<SelectListItem> { new SelectListItem { Text = @"Straight Line Method", Value = "01" } } ," -Select Method -", new { @class = "form-control", disabled = true })
+                        </div>
+                        @Html.Label("Depn Rate:", new {@class = "col-sm-2 col-form-label"})
+                        <div class="col-sm-1">
+                            @Html.TextBoxFor(model => model.DepRate, null, new { @class = "form-control", disabled = true, value = 0 })
+                        </div>
+                        @Html.Label("% PM", new { @class = "col-sm-2 col-form-label"})
+                    </div>
+                    <div class="form-group row">
+                        @Html.Label("Cost Price:", new {@class = "col-sm-2 col-form-label manadatory"})
+                        <div class="col-sm-3">
+                            @Html.TextBoxFor(model => model.CostPrice, new { @class = "form-control moneyInput", disabled =true, onkeypress = "return event.charCode >= 48 && event.charCode <= 57" })
+                        </div>
+                        @Html.Label("Useful Life/Terms:", new {@class = "col-sm-2 col-form-label manadatory"})
+                        <div class="col-sm-3">
+                            @Html.TextBoxFor(model => model.Terms, null, new { @class = "form-control", disabled = true, type = "number", onkeypress = "return event.charCode >= 48 && event.charCode <= 57" })
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        @Html.Label("Purchase Date:", new {@class = "col-sm-2 col-form-label manadatory"})
+                        <div class="col-sm-3">
+                            @Html.TextBoxFor(model => model.PurchasedOn, null, new { @class = "form-control datePickers", disabled = true })
+                        </div>
+                        @Html.Label("Depn From:", new {@class = "col-sm-2 col-form-label manadatory"})
+                        <div class="col-sm-3">
+                            @Html.TextBoxFor(model => model.DepFrom, "", new { @class = "form-control datePickers", disabled = true })
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        @Html.Label("Depn End:", new {@class = "col-sm-2 col-form-label manadatory"})
+                        <div class="col-sm-3">
+                            @Html.TextBoxFor(model => model.DepEnd, "", new { @class = "form-control", disabled = true })
+                        </div>
+                    </div>
+                </div>
+                <h4><span>Behind The Scene:</span></h4>
+                <div class="panel-body">
+                    <div class="form-group row">
+                        @Html.Label("NetBook Value:", new {@class = "col-sm-2 col-form-label manadatory"})
+                        <div class="col-sm-3">
+                            @Html.TextBoxFor(model => model.NetBookValue, null, new {@class = "form-control", disabled = true, value = 0.00})
+                        </div>
+                        @Html.Label("Accum Dep:", new {@class = "col-sm-2 col-form-label manadatory"})
+                        <div class="col-sm-3">
+                            @Html.TextBoxFor(model => model.AccumDep, null, new {@class = "form-control", disabled = true, value = 0.00 })
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        @Html.Label("Remaining Terms:", new {@class = "col-sm-2 col-form-label manadatory"})
+                        <div class="col-sm-3">
+                            @Html.TextBoxFor(model => model.RemainingTerms, null, new {@class = "form-control", disabled = true, value = 0 })
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="col-md-2">
+        <div class="panel panel-default" style="height: 775px">
+            <div class="panel-body table-responsive">
+                <table class="table table-bordered text-center">
+                    <tbody>
+                    <tr>
+                        <td>
+                            <button class="btn btn-block btn-info" id="btnVerify" disabled="disabled" type="button">Verify</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <button class="btn btn-block btn-primary" id="btnAdd" type="button">Add</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <button class="btn btn-block btn-secondary" disabled="disabled" id="btnEdit" type="button">Edit</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <button class="btn btn-block btn-success" disabled="disabled" id="btnSave" type="button">Save</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <button class="btn btn-block btn-warning" id="btnCancel" disabled="disabled" type="button">Cancel</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <button class="btn btn-block btn-danger" id="btnDelete" disabled="disabled" type="button">Delete</button>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="searchModal" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Search</h4>
+            </div>
+            <div class="modal-body" id="searchContent">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="assetSearchModal" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Search</h4>
+            </div>
+            <div class="modal-body" id="assetSearchContent">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modal-success" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content bg-success">
+            <div class="modal-header">
+                <h4 class="modal-title">Success Modal</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <div class="modal-body" id="success-content">
+                <p id="success-message"></p>
+            </div>
+            <div class="modal-footer justify-content-between">
+                <button type="button" class="btn btn-outline-light" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="modal-failure" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content bg-danger">
+            <div class="modal-header">
+                <h4 class="modal-title">Danger Modal</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <div class="modal-body" id="failure-content">
+                <p id="failure-message"></p>
+            </div>
+            <div class="modal-footer justify-content-between">
+                <button type="button" class="btn btn-outline-light" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+
+    var addOrEdit;
+
+    $('#btnAdd').click(function(e) {
+
+        e.preventDefault();
+
+        $('#AssetID, #DepRate, #DepEnd, #ProductName, #AssetIDPrefix').val('');
+
+        $('#btnSave, #btnCancel').removeAttr('disabled');
+
+        $('#ProductCode, #Description, #SupplierID, #SerialNo, #TagNo, #BrandName, #Location, #DepMthd, #CostPrice, #Terms, #PurchasedOn, #DepFrom').removeAttr('disabled').val('');
+
+        $('#btnAdd, #btnEdit, #btnDelete, #AssetID').attr('disabled', 'disabled');
+
+        addOrEdit = 'A';
+
+        $('#ProductCode').focus();
+
+        return false;
+
+    });
+
+    $('#btnSave').click(function (e) {
+
+        e.preventDefault();
+
+        if ($('#ProductCode').val() !== '' &&
+            $('#Description').val() !== '' &&
+            $('#SupplierID').val() !== '' &&
+            $('#Location').val() !== '' &&
+            $('#DepMthd').val() !== '' &&
+            $('#CostPrice').val() !== '' &&
+            $('#Terms').val() !== '' &&
+            $('#PurchasedOn').val() !== '' &&
+            $('#DepFrom').val() !== '') {
+
+            var asset = {
+                AssetID: $('#AssetID').val(),
+                Description: $('#Description').val(),
+                ProductCode: $('#ProductCode').val(),
+                SupplierID: $('#SupplierID').val(),
+                SerialNo: $('#SerialNo').val(),
+                TagNo: $('#TagNo').val(),
+                BrandName: $('#BrandName').val(),
+                Location: $('#Location').val(),
+                DepMthd: $('#DepMthd').val(),
+                DepRate: $('#DepRate').val(),
+                CostPrice: removeNumberFormats($('#CostPrice').val()),
+                Terms: $('#Terms').val(),
+                PurchasedOn: $('#PurchasedOn').val(),
+                DepFrom: $('#DepFrom').val(),
+                DepEnd: $('#DepEnd').val()
+            };
+
+            $.ajax({
+                type: "POST",
+                url: '@Url.Action("AddEditFixedAssets", "FixedAssets")',
+                data: {
+                    asset: asset,
+                    action: addOrEdit
+                },
+                dataType: "json",
+                success: function(response) {
+                    if (response) {
+                        if (response.success) {
+                            if (addOrEdit === 'A') {
+                                $('#AssetID').val(response.message);
+                                $('#success-message').text('Asset added successfully');
+                            }
+                            $('#success-message').text(response.message);
+                            $('#modal-success').modal('show');
+                        } else {
+                            $('#failure-message').text(response.message);
+                            $('#modal-failure').modal('show');
+                        }
+                    }
+                }
+            }).done(function() {
+
+                $('#btnAdd').removeAttr('disabled');
+
+                $('#AssetID').val('').removeAttr('disabled');
+
+                $('#ProductCode, #DepRate, #DepEnd, #ProductName, #AssetIDPrefix, #Description, #SupplierID, #SerialNo, #TagNo, #BrandName, #Location, #DepMthd, #CostPrice, #Terms, #PurchasedOn, #DepFrom').attr('disabled', 'disabled').val('');
+
+                $('#btnSave, #btnEdit, #btnDelete, #btnCancel, #btnVerify').attr('disabled', 'disabled');
+
+                $('#validationMessage').text('');
+
+            });
+        } else {
+            $('#validationMessage').text('Please enter all the required information');
+        }
+
+        return false;
+
+    });
+
+    $('#btnEdit').click(function(e) {
+
+        e.preventDefault();
+
+        $('#Description, #SupplierID, #SerialNo, #TagNo, #BrandName, #Location, #DepMthd, #CostPrice, #Terms, #PurchasedOn, #DepFrom')
+            .removeAttr('disabled');
+
+        addOrEdit = 'E';
+
+        $('#btnSave, #btnCancel').removeAttr('disabled');
+
+        $('#btnVerify, #btnAdd, #btnEdit, #btnDelete').attr('disabled', 'disabled');
+        
+        return false;
+    });
+
+    $('#btnCancel').click(function (e) {
+
+        e.preventDefault();
+
+        $('#AssetID').val('').removeAttr('disabled');
+
+        $('#ProductCode, #DepRate, #DepEnd, #ProductName, #AssetIDPrefix, #Description, #SupplierID, #SerialNo, #TagNo, #BrandName, #Location, #DepMthd, #CostPrice, #Terms, #PurchasedOn, #DepFrom').attr('disabled', 'disabled').val('');
+
+        $('#btnSave, #btnEdit, #btnVerify, #btnDelete, #btnCancel').attr('disabled', 'disabled');
+
+        $('#btnAdd').removeAttr('disabled');
+
+        return false;
+
+    });
+
+    $('#DepFrom').datepicker({
+        onSelect: function () {
+
+            if ($('#Terms').val() !== '') {
+
+                var depfrom = new Date($('#DepFrom').val());
+                var terms = $('#Terms').val();
+                console.log(depfrom);
+                //var depEnd = new Date(depfrom.setMonth(depfrom.getMonth() + terms));
+
+                $('#DepEnd').val(addMonths(depfrom, terms));
+            }
+
+        }
+    });
+
+    function addMonths(date, months) {
+        var d = date.getDate();
+        date.setMonth(date.getMonth() + +months);
+        if (date.getDate() !== d) {
+            date.setDate(0);
+        }
+        var dd = String(date.getDate()).padStart(2, '0');
+        var mm = String(date.getMonth() + 1).padStart(2, '0');
+        var yyyy = date.getFullYear();
+
+        date = mm + '/' + dd + '/' + yyyy;
+        return date;
+    }
+
+</script>
+

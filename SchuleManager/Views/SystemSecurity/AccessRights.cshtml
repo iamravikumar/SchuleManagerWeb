@@ -1,0 +1,285 @@
+﻿@model SchuleManager.Models.RoleRights
+@{
+    ViewBag.Title = "Access Rights";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style type="text/css">
+    h4 {
+        width: 100%;
+        text-align: left;     
+        border-bottom: 1px solid #000;
+        line-height: 0.1em;
+        margin: 10px 0 20px;
+        color: red;
+    }
+
+    h4 span {
+        background: #fff;
+        padding: 0 10px;
+    }
+
+    h5 {
+        width: 100%;
+        text-align: center;
+        border-bottom: 1px solid #000;
+        line-height: 0.1em;
+        margin: 10px 0 20px;
+        color: blue;
+    }
+
+    h5 span {
+        background: #fff;
+        padding: 0 10px;
+    }
+</style>
+
+
+<script type="text/javascript">
+
+    $(document).ready(function () {
+
+        //Gets entered role details or returns pop up search modal incase of F2 press
+        $('#RoleCode').on('input keydown', function (event) {
+
+            var keycode = event.keyCode || event.which;
+
+            if (keycode === 113) { //F2 key press
+
+                return helpGeneralSearch('R');
+
+            } else if (keycode === 8) { //Backspace key
+                $('#Description').val('');
+            }
+            else {
+                var data = {
+                    roleCode: $(this).val()
+                };
+
+                $.getJSON("GetRoleDetails", data, function (json) {
+
+                    if (json.length) {
+
+                        $('#Description').val(json[0].Description);
+
+                        $('#Modules').removeAttr('disabled');
+                    } else {
+                        $('#Modules').attr('disabled', 'disabled');
+                    }
+
+                });
+            }
+
+            return null;
+        });
+
+        //When Role Search Modal is closed, save and cancel buttons are enabled
+        $("#searchModal").on("hidden.bs.modal", function () {
+
+            if ($('#RoleCode').val() !== "" && $('#Description').val() !== "") {
+
+                $('#Modules').removeAttr('disabled');
+            } else {
+                $('#Modules').attr('disabled', 'disabled');
+            }
+        });
+
+        $('#Modules').change(function () {
+
+            var selectedItemValue = $("#Modules").val();
+            var ddlSubModules = $("#SubModules");
+
+            if ($('#Modules').val() !== '') {
+                $.ajax({
+                    cache: false,
+                    type: "GET",
+                    url: '@Url.Action("GetSubModules", "SystemSecurity")',
+                    data: { "moduleId": selectedItemValue },
+                    success: function (data) {
+                        ddlSubModules.html('');
+                        ddlSubModules.removeAttr('disabled');
+                        ddlSubModules.append($('<option></option>').val('').html(' - Select SubModule - '));
+                        $.each(data,
+                            function (id, option) {
+                                ddlSubModules.append($('<option></option>').val(option.SubModuleId).html(option.SubModule));
+                            });
+                    }
+                });
+            } else {
+                ddlSubModules.html('');
+                ddlSubModules.append($('<option></option>').val('').html(' - Select Module - '));
+                ddlSubModules.attr('disabled', 'disabled');
+            }
+
+            $('#RoleRights, #DataEntryRights').html('');
+        });
+
+
+        $('#SubModules').change(function () {
+
+            var url = '@Url.Content("~/")' + "SystemSecurity/GetRoleRights";
+            var role = $('#RoleCode').val();
+            var subModule = $('#SubModules').val();
+
+            $.ajax({
+                type: "POST",
+                url: url,
+                data: '{roleCode: "' + role + '", subModuleId: "' + subModule  + '" }',
+                contentType: "application/json; charset=utf-8",
+                dataType: "html",
+                success: function (response) {
+                    $('#RoleRights').html(response);                   
+                }
+            });
+
+            $('#DataEntryRights').html('');
+        });
+
+    });
+
+
+    function helpGeneralSearch(flag) {
+        var url = '@Url.Content("~/")' + "Search/HelpGeneralSearch";
+        $.ajax({
+            type: "POST",
+            url: url,
+            data: '{searchFlag: "' + flag + '" }',
+            contentType: "application/json; charset=utf-8",
+            dataType: "html",
+            success: function (response) {
+                $('#searchContent').html(response);
+                $('#searchModal').modal('show');
+            },
+            failure: function () {
+                $('#searchContent').text(response.message);
+                $('#searchModal').modal('show');
+            }
+        });
+    }
+
+</script>
+
+<div class="row">
+    <div class="col-md-5">
+        <h2>Role Rights</h2>
+    </div>
+    <div class="col-md-7">
+        <p id="validationMessage" style="color: red"></p>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-10">
+        <form asp-controller="SystemSecurity" asp-action="AccessRights"  method="post" class="form-horizontal">
+            <h4><span>User Role:</span></h4>
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <div class="form-group row">
+                        @Html.Label("Role:", new { @class = "col-sm-2 col-form-label manadatory" })
+                        <div class="col-sm-3">
+                            @Html.TextBoxFor(model => model.RoleCode, null, new { @class = "form-control" })
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        @Html.Label("Description:", new { @class = "col-sm-2 col-form-label manadatory" })
+                        <div class="col-sm-8">
+                            @Html.TextBoxFor(model => model.Description, null, new { @class = "form-control", disabled = true })
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <h4><span>Access Rights:</span></h4>
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <div class="form-group row">
+                        @Html.Label("Module:", new { @class = "col-sm-2 col-form-label manadatory" })
+                        <div class="col-sm-3">
+                            @Html.DropDownList("Modules", null, "- Select Module -", new { @class = "form-control", disabled = true })
+                        </div>
+                        @Html.Label("Sub Module:", new { @class = "col-sm-2 col-form-label manadatory" })
+                        <div class="col-sm-3">
+                            @Html.DropDownList("SubModules", null, "- Select Module -", new { @class = "form-control", disabled = true })
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-5" style="height: 250px; border: 1px solid black; overflow-y: scroll">
+                            <div class="card">
+                                <div class="card-header border-0">
+                                    <h3 class="card-title">Role Rights</h3>
+                                    <div class="card-body" id="RoleRights">
+                                        
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-5" style="height: 250px; border: 1px solid black; overflow-y: scroll">
+                            <div class="card">
+                                <div class="card-header border-0">
+                                    <div class="card-body" id="DataEntryRights">
+                                        
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="col-md-2">
+        <div class="panel panel-default" style="height: 610px">
+            <div class="panel-body table-responsive">
+                <table class="table table-bordered text-center">
+                    <tbody>
+                    <tr>
+                        <td>
+                            <button class="btn btn-block btn-secondary" disabled="disabled" id="btnEdit" type="button">Edit</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <button class="btn btn-block btn-success" disabled="disabled" id="btnSave" type="button">Save</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <button class="btn btn-block btn-warning" id="btnCancel" disabled="disabled" type="button">Cancel</button>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="searchModal" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Search</h4>
+            </div>
+            <div class="modal-body" id="searchContent">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="messageModal" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body" id="messageContent">
+                <p id="message"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>

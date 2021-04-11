@@ -1,0 +1,85 @@
+﻿@model IEnumerable<SchuleManager.Models.RoleRights>
+    
+<style type="text/css">
+    .menuRightsLabel {
+        display: inline-block;
+        padding: 4px 11px;
+        cursor: pointer;
+    }
+</style>
+
+@foreach (var menu in Model)
+{
+    <div class="form-group row">                      
+        <div class="col-sm-5">
+            <div class="custom-control custom-checkbox" style="width:250px">
+                <input type="checkbox" id=@menu.MenuDescription.Replace(" ", "") class="custom-control-input" value="@menu.MenuId"/>
+                <label class="menuRightsLabel custom-control-label" for="@menu.MenuDescription.Replace(" ", "")">@menu.MenuDescription</label>
+            </div>
+        </div>
+    </div>   
+
+    if (menu.HasAccess)
+     {
+         <script type="text/javascript">
+
+             var id = '@menu.MenuDescription.Replace(" ", "")';
+
+             $('#' + id).prop('checked', true);
+
+         </script>
+     }
+}
+
+
+<script type="text/javascript">
+
+    var input = $("input:checkbox");
+
+    $(input).click(function () {
+
+        var url = '@Url.Content("~/")' + "SystemSecurity/GetDataEntryRights";
+        var roleCode = $('#RoleCode').val();
+        var menuId = $(this).val();
+
+        $.ajax({
+            type: "POST",
+            url: url,
+            data: '{roleCode: "' + roleCode + '", menuId: "' + menuId + '" }',
+            contentType: "application/json; charset=utf-8",
+            dataType: "html",
+            success: function (response) {
+                $('#DataEntryRights').html(response);
+            }
+        });
+
+    });
+
+    $('.menuRightsLabel').click(function () {
+        
+        if ((this).css("background-color") === 'rgb(255, 177, 0)') {
+            $(this).css("background-color", "white");
+        } else {
+            $(this).css("background-color", "rgb(255, 177, 0)");
+        }
+
+
+        @*$(this).css("background-color", "lightblue");
+
+        var url = '@Url.Content("~/")' + "SystemSecurity/GetDataEntryRights";
+        var roleCode = $('#RoleCode').val();
+        var menuId = $(this).attr('for').val();
+
+        $.ajax({
+            type: "POST",
+            url: url,
+            data: '{roleCode: "' + roleCode + '", menuId: "' + menuId + '" }',
+            contentType: "application/json; charset=utf-8",
+            dataType: "html",
+            success: function (response) {
+                $('#DataEntryRights').html(response);
+            }
+        });*@
+    });
+
+</script>

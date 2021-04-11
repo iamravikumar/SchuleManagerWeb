@@ -1,0 +1,658 @@
+﻿@model SchuleManager.Models.CashTransactionsViewModel
+@{
+    ViewBag.Title = "Cash Transactions";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<style type="text/css">
+    .moneyInputDR {
+        text-align: right;
+        color: red;
+    }
+    .moneyInputCR {
+        text-align: right;
+        color: blue;
+    }
+    .moneyInput {
+        text-align: right;
+    }
+    .amountPaidInput {
+        text-align: right;
+    }
+
+    /* Chrome, Safari, Edge, Opera */
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    /* Firefox */
+    input[type=number] {
+        -moz-appearance: textfield;
+    }
+</style>
+
+<script src="~/Scripts/accounting.min.js"></script>
+
+<script type="text/javascript">
+
+    $(document).ready(function() {
+        $(".datePickers").datepicker({
+            dateFormat: 'dd-mm-yy'
+        });
+
+        $('#AccountType').change(function() {
+            resetInputs();
+        });
+
+        //Gets entered accounts details and returns pop up search modal incase of F2 press
+        $('#CashTransaction_AccountID').on('input keydown', function(event) {
+
+                var data;
+                var keycode = event.keyCode || event.which;
+
+                if ($('#AccountType').val() === "S") {
+
+                    if (keycode === 113) { //F2 key press
+
+                        return helpAccountSearch($('#AccountType').val());
+
+                    } else {
+                        data = {
+                            accountId: $(this).val(),
+                            accountType: 'C'
+                        };
+
+                        $.getJSON("GetAccountDetails",
+                            data,
+                            function(json) {
+                                if (json.length) {
+                                    $('#AccountDetails_ClearBalance').val(formatNumbers(json[0].ClearBalance));
+                                    $('#AccountDetails_LienAmount').val(formatNumbers(json[0].LienAmount));
+                                    $('#AccountDetails_FrozenAmount').val(formatNumbers(json[0].FrozenAmount));
+                                    $('#CashTransaction_AccountName').val(json[0].AccountName);
+                                    $('#CashTransaction_ProductCode').val(json[0].ProductCode);
+                                    $('#ProductName').val(json[0].ProductName);
+                                    $('#AccountDetails_UnSupervisedCredit').val(formatNumbers(json[0].UnSupervisedCredit));
+                                    $('#AccountDetails_UnSupervisedDebit').val(formatNumbers(json[0].UnSupervisedDebit));
+
+                                    $('#btnSaveTransaction, #btnCancelTransaction').removeAttr("disabled");
+                                }
+                            });
+                    }
+
+                } else {
+
+                    if (keycode === 113) { //F2 key press
+
+                        return helpGeneralSearch("G");
+
+                    } else {
+                        data = {
+                            accountId: $(this).val(),
+                            accountType: 'G'
+                        };
+
+                        $.getJSON("GetAccountDetails",
+                            data,
+                            function(json) {
+                                if (json.length) {
+                                    $('#AccountDetails_ClearBalance').val(formatNumbers(json[0].ClearBalance));
+                                    $('#AccountDetails_LienAmount').val(0);
+                                    $('#AccountDetails_FrozenAmount').val(0);
+                                    $('#CashTransaction_AccountName').val(json[0].AccountName);
+                                    $('#CashTransaction_ProductCode').val('GL');
+                                    $('#ProductName').val('GENERAL LEDGER');
+                                    $('#AccountDetails_UnSupervisedCredit').val(formatNumbers(json[0].UnSupervisedCredit));
+                                    $('#AccountDetails_UnSupervisedDebit').val(formatNumbers(json[0].UnSupervisedDebit));
+
+                                    $('#btnSaveTransaction, #btnCancelTransaction').removeAttr("disabled");
+                                }
+                            });
+                    }
+                }
+
+
+                return null;
+        });
+
+        //When Account Search Modal is closed, save and cancel buttons are enabled
+        $("#searchModal").on("hidden.bs.modal", function () {
+            if ($('#CashTransaction_AccountID').val() !== "" && $('#CashTransaction_AccountName').val() !== "") {
+                $('#btnSaveTransaction, #btnCancelTransaction').removeAttr("disabled");
+            }
+        });
+
+        $('#PartTranType').change(function() {
+            if ($('#CashTransaction_TranCode').val() === "001") {
+                $('#CashTransaction_TranCode').val("002");
+                $('#CashTransaction_TranCodeDescription').val("CASH DEBIT");
+            } else {
+                $('#CashTransaction_TranCode').val("001");
+                $('#CashTransaction_TranCodeDescription').val("CASH CREDIT");
+            }
+        });
+
+        $('#CashTransaction_TranRemarks, #CashTransaction_TranAmount').on('input', function () {
+            if ($('#validationMessage').text() !== "") {
+                $('#validationMessage').text('');
+            }           
+        });
+
+        $('#CashTransaction_TranAmount').on('blur', function() {
+            $(this).val(formatNumbers($(this).val()));
+        });
+
+    });
+
+    //clears all the inputs
+    function resetInputs() {
+        $('#CashTransaction_AccountID').val('');
+        $('#CashTransaction_AccountName').val('');
+        $('#CashTransaction_ProductCode').val('');
+        $('#ProductName').val('');
+        $('#CashTransaction_ReceiptNo').val('');
+        $('#CashTransaction_TranRemarks').val('');
+        $('#CashTransaction_TranAmount').val(0);
+        $('#AccountDetails_ClearBalance').val(0);
+        $('#AccountDetails_LienAmount').val(0);
+        $('#AccountDetails_FrozenAmount').val(0);
+        $('#AccountDetails_UnSupervisedCredit').val(0);
+        $('#AccountDetails_UnSupervisedDebit').val(0);
+    }
+
+    //applies accounting number formats
+    function formatNumbers(amount) {
+
+        return accounting.formatMoney(amount,
+            {
+                symbol: "",
+                precision: 2,
+                thousand: ",",
+                format: {
+                    pos: "%s %v",
+                    neg: "%s (%v)",
+                    //zero: "%s  --"
+                    zero: "0"
+                }
+            });
+    }
+
+    //removes accounting number formats
+    function removeNumberFormats(amount) {
+
+        return accounting.unformat(amount);
+    }
+
+</script>
+
+<div class="row">
+    <div class="col-md-12">
+        <h2>Cash Transactions</h2>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-10">
+        <div class="panel panel-default" id="transactionDetails-panel">
+            <div class = "panel-heading">
+                Transaction Details
+            </div>
+            <div class="panel-body">
+                <div class="row">
+                    <div class="col-md-2">
+                        @Html.Label("Part Transaction Type:", new {@class = "control-label"})
+                    </div>
+                    <div class="col-md-3">
+                        @Html.DropDownList("PartTranType", new List<SelectListItem> {new SelectListItem {Text = @"CREDIT", Value = "C"}, new SelectListItem {Text = @"DEBIT", Value = "D"}}, new {@class = "form-control"})
+                    </div>
+                    <div class="col-md-2">
+                        @Html.Label("Account Type:", new {@class = "control-label"})
+                    </div>
+                    <div class="col-md-3">
+                        @Html.DropDownList("AccountType", new List<SelectListItem> {new SelectListItem {Text = @"SAVINGS", Value = "S"}, new SelectListItem {Text = @"GENERAL LEDGER", Value = "G"}}, new {@class = "form-control"})
+                    </div>
+                </div>
+                <br/>
+                <div class="row">
+                    <div class="col-md-2">
+                        @Html.Label("Account ID:", new {@class = "control-label manadatory"})
+                    </div>
+                    <div class="col-md-3">
+                        @Html.TextBoxFor(model => model.CashTransaction.AccountID, new {@class = "form-control"})
+                    </div>
+                    <div class="col-md-5">
+                        @Html.TextBoxFor(model => model.CashTransaction.AccountName, new {@class = "form-control", disabled = true})
+                    </div>
+                </div>
+                <br/>
+                <div class="row">
+                    <div class="col-md-2">
+                        @Html.Label("Product:", new {@class = "control-label manadatory"})
+                    </div>
+                    <div class="col-md-3">
+                        @Html.TextBoxFor(model => model.CashTransaction.ProductCode, new {@class = "form-control", disabled = true})
+                    </div>
+                    <div class="col-md-5">
+                        @Html.TextBox("ProductName", null, new {@class = "form-control", disabled = true})
+                    </div>
+                </div>
+                <br/>
+                <div class="row">
+                    <div class="col-md-2">
+                        @Html.Label("Receipt#:", new {@class = "control-label"})
+                    </div>
+                    <div class="col-md-3">
+                        @Html.TextBoxFor(model => model.CashTransaction.ReceiptNo, new {@class = "form-control"})
+                    </div>
+                    <div class="col-md-2">
+                        @Html.Label("Value Date:", new {@class = "control-label"})
+                    </div>
+                    <div class="col-md-3">
+                        @Html.TextBoxFor(model => model.CashTransaction.ValueDate, new {@class = "form-control datePickers"})
+                    </div>
+                </div>
+                <br/>
+                <div class="row">
+                    <div class="col-md-2">
+                        @Html.Label("Transaction Code:", new {@class = "control-label manadatory"})
+                    </div>
+                    <div class="col-md-3">
+                        @Html.TextBoxFor(model => model.CashTransaction.TranCode, new {@class = "form-control", disabled = true})
+                    </div>
+                    <div class="col-md-5">
+                        @Html.TextBoxFor(model => model.CashTransaction.TranCodeDescription, new {@class = "form-control", disabled = true})
+                    </div>
+                </div>
+                <br/>
+                <div class="row">
+                    <div class="col-md-2">
+                        @Html.Label("Transaction Remarks:", new {@class = "control-label manadatory"})
+                    </div>
+                    <div class="col-md-8">
+                        @Html.TextBoxFor(model => model.CashTransaction.TranRemarks, new {@class = "form-control"})
+                    </div>
+                </div>
+                <br/>
+                <div class="row">
+                    <div class="col-md-2">
+                        @Html.Label("Amount:", new {@class = "control-label manadatory"})
+                    </div>
+                    <div class="col-md-3">
+                        @Html.TextBoxFor(model => model.CashTransaction.TranAmount, new {@class = "form-control moneyInput", onkeypress= "return event.charCode >= 48 && event.charCode <= 57"})
+                    </div>
+                    <div class="col-md-5">
+                        <p id="validationMessage" style="color: red"></p>
+                    </div>
+                </div>
+            </div>           
+            <div class = "panel-heading">
+                Account Details
+            </div>
+            <br/>
+            <div class="row">
+                <div class="col-md-2">
+                    @Html.Label("Clear Balance:", new {@class = "control-label"})
+                </div>
+                <div class="col-md-3">
+                    @Html.TextBoxFor(model => model.AccountDetails.ClearBalance, new {@class = "form-control moneyInput", disabled = true})
+                </div>
+                <div class="col-md-2">
+                    @Html.Label("Lien Amount:", new {@class = "control-label"})
+                </div>
+                <div class="col-md-3">
+                    @Html.TextBoxFor(model => model.AccountDetails.LienAmount, new {@class = "form-control moneyInput", disabled = true})
+                </div>
+            </div>
+            <br/>
+            <div class="row">
+                <div class="col-md-2">
+                    @Html.Label("Available Balance:", new {@class = "control-label"})
+                </div>
+                <div class="col-md-3">
+                    @Html.TextBoxFor(model => model.AccountDetails.ClearBalance, new {@class = "form-control moneyInput", disabled = true})
+                </div>
+                <div class="col-md-2">
+                    @Html.Label("Frozen Amount:", new {@class = "control-label"})
+                </div>
+                <div class="col-md-3">
+                    @Html.TextBoxFor(model => model.AccountDetails.FrozenAmount, new {@class = "form-control moneyInput", disabled = true})
+                </div>
+            </div>
+            <br/>
+            <div class="row">
+                <div class="col-md-2">
+                    @Html.Label("Unsupervised Credit:", new {@class = "control-label"})
+                </div>
+                <div class="col-md-3">
+                    @Html.TextBoxFor(model => model.AccountDetails.UnSupervisedCredit, new {@class = "form-control moneyInputCR", disabled = true})
+                </div>
+                <div class="col-md-2">
+                    @Html.Label("Unsupervised Debit:", new {@class = "control-label"})
+                </div>
+                <div class="col-md-3">
+                    @Html.TextBoxFor(model => model.AccountDetails.UnSupervisedDebit, new {@class = "form-control moneyInputDR", disabled = true})
+                </div>
+            </div>
+            <br/>
+            <div class="panel-heading">
+                Cashier Account Details
+            </div>
+            <br/>
+            <div class="row">
+                <div class="col-md-2">
+                    @Html.Label("Cashier GL A/C:", new { @class = "control-label" })
+                </div>
+                <div class="col-md-3">
+                    @Html.TextBoxFor(model => model.CashierAccount.AccountID, new { @class = "form-control", disabled = true })
+                </div>
+                <div class="col-md-5">
+                    @Html.TextBoxFor(model => model.CashierAccount.AccountName, new { @class = "form-control", disabled = true })
+                </div>
+            </div>
+            <br />
+            <div class="row">
+                <div class="col-md-2">
+                    @Html.Label("Total Debits:", new { @class = "control-label" })
+                </div>
+                <div class="col-md-3">
+                    @Html.TextBoxFor(model => model.CashierAccount.TotalDebits, new { @class = "form-control moneyInputDR", disabled = true, Value = String.Format("{0,15:#,##0.00 ;(#,##0.00);0.00   }", Model.CashierAccount.TotalDebits) })
+                </div>
+                <div class="col-md-2">
+                    @Html.Label("Opening Balance:", new { @class = "control-label" })
+                </div>
+                <div class="col-md-3">
+                    @Html.TextBoxFor(model => model.CashierAccount.PrevBalance, new { @class = "form-control moneyInputDR", disabled = true, Value = String.Format("{0,15:#,##0.00 ;(#,##0.00);0.00   }", Model.CashierAccount.PrevBalance) })
+                </div>
+            </div>
+            <br/>
+            <div class="row">
+                <div class="col-md-2">
+                    @Html.Label("Total Credits:", new { @class = "control-label" })
+                </div>
+                <div class="col-md-3">
+                    @Html.TextBoxFor(model => model.CashierAccount.TotalCredits, new { @class = "form-control moneyInputCR", disabled = true, Value = String.Format("{0,15:#,##0.00 ;(#,##0.00);0.00   }", Model.CashierAccount.TotalCredits) })
+                </div>
+                <div class="col-md-2">
+                    @Html.Label("Closing Balance:", new { @class = "control-label" })
+                </div>
+                <div class="col-md-3">
+                    @Html.TextBoxFor(model => model.CashierAccount.Balance, new { @class = "form-control moneyInputDR", disabled = true, Value = String.Format("{0,15:#,##0.00 ;(#,##0.00);0.00   }", Model.CashierAccount.Balance) })
+                </div>
+            </div>
+            <br/>
+            <div class="row">
+                <div class="col-md-2">
+                    @Html.Label("Shadow Balance:", new { @class = "control-label" })
+                </div>
+                <div class="col-md-3">
+                    @*@Html.TextBoxFor(model => model.CashierAccount.ShadowBalance, new { @class = "form-control moneyInput", disabled = true, Value = String.Format("{0,15:#,##0.00 ;(#,##0.00);-   }", Model.CashierAccount.ShadowBalance) })*@
+                    @Html.TextBoxFor(model => model.CashierAccount.ShadowBalance, new { @class = "form-control moneyInput", disabled = true, Value = String.Format("{0,15:#,##0.00 ;(#,##0.00);0.00   }", Model.CashierAccount.ShadowBalance) })
+                </div>
+                <div class="col-md-2">
+                    @Html.Label("Clear Balance:", new { @class = "control-label" })
+                </div>
+                <div class="col-md-3">
+                    @Html.TextBoxFor(model => model.CashierAccount.ClearBalance, new { @class = "form-control moneyInputDR", disabled = true, Value = String.Format("{0,15:#,##0.00 ;(#,##0.00);-   }", Model.CashierAccount.ClearBalance) })
+                </div>
+            </div>
+            <br/>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="panel panel-default" id="buttons-panel" style="height: 897px">
+            <input id="SystemDate" value="@ViewBag.SystemDate" type="hidden" />
+            <br />
+            <div class="row">
+                <button style="width: 100%" class="btn btn-success" id="btnSaveTransaction" disabled="disabled">Save</button>
+            </div>
+            <br />
+            <div class="row">
+                <button style="width: 100%" class="btn btn-danger" id="btnCancelTransaction" disabled="disabled">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="searchModal" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Search</h4>
+            </div>
+            <div class="modal-body" id="searchContent">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="messageModal" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body" id="messageContent">
+                <p id="message"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+
+    //Returns Modal with all student Account details
+    function helpAccountSearch(acctType) {
+        var url = '@Url.Content("~/")' + "Search/HelpAccountSearch";
+        $.ajax({
+            type: "POST",
+            url: url,
+            data: '{accountType: "' + acctType + '" }',
+            contentType: "application/json; charset=utf-8",
+            dataType: "html",
+            success: function(response) {
+                $('#searchContent').html(response);
+                $('#searchModal').modal('show');
+            },
+            failure: function() {
+                $('#searchContent').text(response.message);
+                $('#searchModal').modal('show');
+            }
+        });
+    }
+
+    function helpGeneralSearch(flag) {
+        var url = '@Url.Content("~/")' + "Search/HelpGeneralSearch";
+        $.ajax({
+            type: "POST",
+            url: url,
+            data: '{searchFlag: "' + flag + '" }',
+            contentType: "application/json; charset=utf-8",
+            dataType: "html",
+            success: function (response) {
+                $('#searchContent').html(response);
+                $('#searchModal').modal('show');
+            },
+            failure: function () {
+                $('#searchContent').text(response.message);
+                $('#searchModal').modal('show');
+            }
+        });
+    }
+
+
+
+    $('#btnSaveTransaction').click(function(e) {
+
+        e.preventDefault();
+
+        var tranAmount = parseInt(removeNumberFormats($('#CashTransaction_TranAmount').val()), 10);
+
+        if ($('#CashTransaction_TranRemarks').val() !== "" && tranAmount > 0) {
+
+            var cashTransactions = [];
+
+            var columnId = 0;
+
+            columnId++;
+
+            //ADD CREDIT/DEBIT TO SAVINGS ACCOUNT OR GL
+            cashTransactions.push({
+                ColumnID: columnId,
+                ValueDate: $('#CashTransaction_ValueDate').val(),
+                AccountID: $('#CashTransaction_AccountID').val(),
+                AccountType: $('#AccountType').val(),
+                ProductCode: $('#CashTransaction_ProductCode').val(),
+                PartTranType: $('#PartTranType').val(),
+                ReceiptNo: $('#CashTransaction_ReceiptNo').val(),
+                TranAmount: tranAmount,
+                TranCode: $('#CashTransaction_TranCode').val(),
+                TranParticulars: $('#CashTransaction_TranCodeDescription').val(),
+                TranRemarks: $('#CashTransaction_TranRemarks').val(),
+                FeeCode: null,
+                BillID: null,
+                TermID: null,
+                BankSlip: null,
+                isRev: false,
+                RevTranDate: null,
+                RevTranID: null,
+                RevTranSerialNo: null
+            });
+
+            //ADD CASH GL TRANSACTION LEG
+            columnId++;
+
+            cashTransactions.push({
+                ColumnID: columnId,
+                ValueDate: $('#CashTransaction_ValueDate').val(),
+                AccountID: $('#CashierAccount_AccountID').val(),
+                AccountType: "G",
+                ProductCode: "GL",
+                PartTranType: $('#PartTranType').val() === 'C' ? 'D' : 'C',
+                ReceiptNo: $('#CashTransaction_ReceiptNo').val(),
+                TranAmount: tranAmount,
+                TranCode: $('#CashTransaction_TranCode').val(),
+                TranParticulars: $('#CashTransaction_TranCodeDescription').val(),
+                TranRemarks: $('#CashTransaction_TranRemarks').val(),
+                FeeCode: null,
+                BillID: 0,
+                TermID: 0,
+                BankSlip: null,
+                isRev: false,
+                RevTranDate: null,
+                RevTranID: null,
+                RevTranSerialNo: null
+            });
+
+            $.ajax({
+                type: "POST",
+                url: '@Url.Action("AddEditTransactions", "SchuleTransactions")',
+                data: {
+                    tranType: 'C',
+                    tranCat: 'C',
+                    trans: cashTransactions,
+                    action: 'A'
+                },
+                dataType: "json",
+                success: function (response) {
+                    if (response) {
+                        $('#message').text(response.message);
+                        $('#messageModal').modal('show');
+                    }
+                }
+            }).done(function () {
+
+                resetInputs();
+
+                getCashierGlAccountBalances();
+
+                getCashierGlTotalCreditsDebits();
+
+                $('#btnSaveTransaction, #btnCancelTransaction').attr("disabled", "disabled");
+
+            });
+
+            } else {
+                $('#validationMessage').text('Please Enter Transaction Remarks and a Transaction Amount greater than 0');
+
+                if ($('#CashTransaction_TranRemarks').val() === "") {
+                    $('#CashTransaction_TranRemarks').focus();
+                } else {
+                    $('#CashTransaction_TranAmount').focus();
+                }
+            }
+
+
+        return false;
+
+    });
+
+    $('#btnCancelTransaction').click(function (e) {
+        e.preventDefault();
+
+        resetInputs();
+
+        $('#btnSaveTransaction, #btnCancelTransaction').attr("disabled", "disabled");
+
+        return false;
+    });
+
+    //gets shadow and clear balance of cashier gl account
+    function getCashierGlAccountBalances() {
+
+        var clearBalParameters = {
+            accountId: $('#CashierAccount_AccountID').val(),
+            accountType: 'G',
+            isVerified: true,
+            isCashierGl: true
+        };
+
+        var shadowBalParameters = {
+            accountId: $('#CashierAccount_AccountID').val(),
+            accountType: 'G',
+            isVerified: false,
+            isCashierGl: true
+        };
+
+        $.getJSON("GetAccountBalance", clearBalParameters, function (json) {
+            $('#CashierAccount_ClearBalance').val(json["balance"]);
+        });
+
+        $.getJSON("GetAccountBalance", shadowBalParameters, function (json) {
+            $('#CashierAccount_ShadowBalance').val(json["balance"]);
+        });
+    }
+
+    //gets total debits or credits on account
+    function getCashierGlTotalCreditsDebits() {
+
+        var totalDebitParameters = {
+            accountId: $('#CashierAccount_AccountID').val(),
+            partTranType: 'D'
+        };
+
+        var totalCreditParameters = {
+            accountId: $('#CashierAccount_AccountID').val(),
+            partTranType: 'C'
+        };
+
+        $.getJSON("GetTotalCreditsDebits", totalDebitParameters,
+            function (json) {
+                $('#CashierAccount_TotalDebits').val(json["amount"]);
+            });
+
+        $.getJSON("GetTotalCreditsDebits", totalCreditParameters,
+            function (json) {
+                $('#CashierAccount_TotalCredits').val(json["amount"]);
+            });
+    }
+
+
+
+</script>

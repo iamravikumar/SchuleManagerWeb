@@ -1,0 +1,121 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{7EBCB1BE-64C1-453A-A19D-1410217E6A41}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>SchuleManager.Models</RootNamespace>
+    <AssemblyName>SchuleManager.Models</AssemblyName>
+    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Web" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="AcademicPeriods.cs" />
+    <Compile Include="AcademicTerms.cs" />
+    <Compile Include="Account.cs" />
+    <Compile Include="Audit.cs" />
+    <Compile Include="CashRegister.cs" />
+    <Compile Include="CashTransactionsViewModel.cs" />
+    <Compile Include="ChangePasswordModel.cs" />
+    <Compile Include="Classes.cs" />
+    <Compile Include="ClassStreams.cs" />
+    <Compile Include="ClientPhotos.cs" />
+    <Compile Include="ClientTypes.cs" />
+    <Compile Include="DailyTranDetails.cs" />
+    <Compile Include="DataEntryRights.cs" />
+    <Compile Include="DataEntryRightsModel.cs" />
+    <Compile Include="Education.cs" />
+    <Compile Include="FeesBankPaymentsViewModel.cs" />
+    <Compile Include="FeesCashPaymentsViewModel.cs" />
+    <Compile Include="FixedAssets.cs" />
+    <Compile Include="FixedAssetsProducts.cs" />
+    <Compile Include="GlAccounts.cs" />
+    <Compile Include="GlParameters.cs" />
+    <Compile Include="GlSubTypes.cs" />
+    <Compile Include="GlTypes.cs" />
+    <Compile Include="Houses.cs" />
+    <Compile Include="InternalTransfersViewModel.cs" />
+    <Compile Include="JsTree.cs" />
+    <Compile Include="JsTreeModel.cs" />
+    <Compile Include="LoginViewModel.cs" />
+    <Compile Include="Menus.cs" />
+    <Compile Include="Modules.cs" />
+    <Compile Include="Nationalities.cs" />
+    <Compile Include="NewTrans.cs" />
+    <Compile Include="Parents.cs" />
+    <Compile Include="PhotoObject.cs" />
+    <Compile Include="ProductItems.cs" />
+    <Compile Include="Products.cs" />
+    <Compile Include="ProductTypes.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Relationships.cs" />
+    <Compile Include="Religions.cs" />
+    <Compile Include="RoleRights.cs" />
+    <Compile Include="StaticData.cs" />
+    <Compile Include="StudentBills.cs" />
+    <Compile Include="StudentClass.cs" />
+    <Compile Include="StudentParent.cs" />
+    <Compile Include="StudentRegistration.cs" />
+    <Compile Include="Students.cs" />
+    <Compile Include="StudentSpecialFees.cs" />
+    <Compile Include="StudentsToBill.cs" />
+    <Compile Include="Subjects.cs" />
+    <Compile Include="SubModules.cs" />
+    <Compile Include="Suppliers.cs" />
+    <Compile Include="SysForms.cs" />
+    <Compile Include="SysSchoolSections.cs" />
+    <Compile Include="SysStaticData.cs" />
+    <Compile Include="SystemHolidays.cs" />
+    <Compile Include="SystemModules.cs" />
+    <Compile Include="SystemRoles.cs" />
+    <Compile Include="SystemSettings.cs" />
+    <Compile Include="SystemUsers.cs" />
+    <Compile Include="SysTerms.cs" />
+    <Compile Include="TermFees.cs" />
+    <Compile Include="Titles.cs" />
+    <Compile Include="TranCategory.cs" />
+    <Compile Include="Transactions.cs" />
+    <Compile Include="UserCredentials.cs" />
+    <Compile Include="UserDetailsEditModel.cs" />
+    <Compile Include="UserDetailsSummaryModel.cs" />
+    <Compile Include="UserDetailsViewModel.cs" />
+    <Compile Include="UsersRolesViewModel.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>

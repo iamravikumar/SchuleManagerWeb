@@ -1,0 +1,328 @@
+﻿@model SchuleManager.Models.SystemHolidays
+@{
+    ViewBag.Title = "System Holidays";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<link href="~/Scripts/dataTablesScripts/dataTables.bootstrap.min.css" rel="stylesheet" />
+<link href="~/Content/bootstrap-datetimepicker.css" rel="stylesheet" />
+<link href="~/Content/jquery.dataTables.css" rel="stylesheet" />
+<script src="~/Scripts/dataTablesScripts/jquery.dataTables.min.js"></script>
+<script src="~/Scripts/bootstrap-datetimepicker.min.js"></script>
+
+<script type="text/javascript">
+
+    var dataTable;
+
+    $(document).ready(function() {
+
+        $(".datePickers").datepicker({
+            dateFormat: 'dd-mm-yy'
+        });
+
+        loadSystemHolidays();
+
+    });
+    
+    function loadSystemHolidays() {
+
+        dataTable = $("#holidaysTable").DataTable({
+            "processing": true, // for show progress bar
+            "serverSide": true, // for process server side
+            "filter": false, // this is for disable filter (search box)
+            "orderMulti": false, // for disable multiple column at once
+            "paging": false,
+            "info": false,
+            "fixedHeader": true,
+            "scrollY": "200px",
+            "scrollCollapse": true,
+            "ajax": {
+                "url": "/SchuleManager/SystemSettings/LoadSystemHolidays",
+                "type": "POST",
+                "datatype": "json"
+            },
+            "columnDefs":
+            [
+                {
+                    "targets": [0],
+                    "visible": true,
+                    "searchable": false,
+                    "orderable": false
+                },
+                {
+                    "targets": [1],
+                    "visible": true,
+                    "searchable": false,
+                    "orderable": false
+                }
+            ],
+            "columns": [
+                { "data": "SHolidayDate", "name": "SHolidayDate", "autoWidth": true },
+                { "data": "Remarks", "name": "Remarks", "autoWidth": true }
+            ]
+        });
+
+        $('#holidaysTable tbody').on('click', 'tr', function () {
+
+            if ($(this).hasClass('selected')) {
+                $(this).removeClass('selected');
+                $('#btnDelete').attr('disabled', 'disabled');
+            }
+            else {
+                dataTable.$('tr.selected').removeClass('selected');
+                $(this).addClass('selected');
+
+                var pos = dataTable.row(this).index();
+                var row = dataTable.row(pos).data();
+
+                $('#HolidayDate').val(row['SHolidayDate']);
+                $('#Remarks').val(row['Remarks']);
+
+                $('#btnDelete').removeAttr('disabled');
+                $('#btnSave, #btnCancel').attr('disabled', 'disabled');
+            }
+        });
+
+    };
+
+</script>
+
+<div class="row">
+    <div class="col-md-5">
+        <h2>System Holidays</h2>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-10">
+        <div class="panel panel-default">
+            <div class="form-horizontal">
+                <div class="panel-body">
+                    <div class="form-group row">
+                        @Html.Label("Date:", new { @class = "col-sm-2 col-form-label manadatory" })
+                        <div class="col-sm-5">
+                            @Html.TextBoxFor(model => model.HolidayDate, null, new { @class = "datePickers form-control", disabled = true })
+                        </div>
+                        <div class="col-md-3">
+                            <input id="SystemDate" value="@ViewBag.SystemDate" type="hidden" />
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        @Html.Label("Remarks:", new { @class = "col-sm-2 col-form-label manadatory" })
+                        <div class="col-sm-5">
+                            @Html.TextBoxFor(model => model.Remarks, null, new { @class = "form-control", disabled = true })
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-sm-5">
+                            <p id="validationMessage" style="color:red"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h2 class="panel-title">System Holidays Summary</h2>
+            </div>
+            <div class="panel-body" style="height: 300px">
+                <div class="table-responsive">
+                    <table id="holidaysTable" class="table table-striped table-bordered nowrap" style="width: 100%; font-size:9px">
+                        <thead>
+                        <tr>
+                            <th class="col-md-3">Holiday Date</th>
+                            <th>Remarks</th>
+                        </tr>
+                        </thead>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="panel panel-default" style="height: 475px">
+            <div class="panel-body table-responsive">
+                <table class="table table-bordered text-center">
+                    <tbody>                
+                    <tr>
+                        <td>
+                            <button class="btn btn-block btn-primary" id="btnAdd" type="button">Add</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <button class="btn btn-block btn-danger" disabled="disabled" id="btnDelete" type="button">Delete</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <button class="btn btn-block btn-success" disabled="disabled" id="btnSave" type="button">Save</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <button class="btn btn-block btn-warning" id="btnCancel" disabled="disabled" type="button">Cancel</button>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modal-success" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content bg-success">
+            <div class="modal-header">
+                <h4 class="modal-title">Success Modal</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <div class="modal-body" id="success-content">
+                <p id="success-message"></p>
+            </div>
+            <div class="modal-footer justify-content-between">
+                <button type="button" class="btn btn-outline-light" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="modal-failure" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content bg-danger">
+            <div class="modal-header">
+                <h4 class="modal-title">Danger Modal</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <div class="modal-body" id="failure-content">
+                <p id="failure-message"></p>
+            </div>
+            <div class="modal-footer justify-content-between">
+                <button type="button" class="btn btn-outline-light" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    
+    $('#btnAdd').click(function(e) {
+
+        e.preventDefault();
+
+        $('#btnSave, #btnCancel, #HolidayDate, #Remarks').removeAttr('disabled');
+
+        $('#btnAdd, #btnDelete').attr('disabled', 'disabled');
+
+        $('#validationMessage').text('');
+
+        $('#HolidayDate').focus();
+
+        return false;
+    });
+
+    $('#btnSave').click(function (e) {
+
+        e.preventDefault();
+
+        var holidayDate = new Date($('#HolidayDate').val());
+        var sysDate = new Date($('#SystemDate').val());
+
+        if (Date.parse(holidayDate) > Date.parse(sysDate)) {
+
+            var holiday = {
+                HolidayDate: $('#HolidayDate').val(),
+                Remarks: $('#Remarks').val()
+            }
+
+            $.ajax({
+                type: "POST",
+                url: '@Url.Action("AddEditSystemHolidays", "SystemSettings")',
+                data: {
+                    holiday: holiday,
+                    action: 'A'
+                },
+                dataType: "json",
+                success: function(response) {
+                    if (response) {
+                        if (response.success) {
+                            $('#success-message').text(response.message);
+                            $('#modal-success').modal('show');
+                            dataTable.ajax.reload();
+                            $('#validationMessage').text('');
+                        } else {
+                            $('#failure-message').text(response.message);
+                            $('#modal-failure').modal('show');
+                        }
+                    }
+                }
+            }).done(function() {
+
+                $('#HolidayDate, #Remarks').val('').attr('disabled', 'disabled');
+
+                $('#btnSave').attr('disabled', 'disabled');
+
+                $('#btnAdd').removeAttr('disabled');
+            });
+        } else {
+            $('#validationMessage').text('Date must be greater than current system date');
+        }
+        
+        return false;
+    });
+
+    $('#btnDelete').click(function(e) {
+
+        e.preventDefault();
+
+        var holiday = {
+            HolidayDate: $('#HolidayDate').val()
+        }
+
+        $.ajax({
+            type: "POST",
+            url: '@Url.Action("AddEditSystemHolidays", "SystemSettings")',
+            data: {
+                holiday: holiday,
+                action: 'D'
+            },
+            dataType: "json",
+            success: function(response) {
+                if (response) {
+                    if (response.success) {
+                        $('#success-message').text(response.message);
+                        $('#modal-success').modal('show');
+                        dataTable.ajax.reload();
+                    } else {
+                        $('#failure-message').text(response.message);
+                        $('#modal-failure').modal('show');
+                    }
+                }
+            }
+        }).done(function() {
+            $('#HolidayDate, #Remarks').val('').attr('disabled', 'disabled');
+        });
+
+        return false;
+    });
+
+    $('#btnCancel').click(function(e) {
+
+        e.preventDefault();
+
+        $('#btnSave, #btnCancel, #HolidayDate, #Remarks').attr('disabled', 'disabled');
+
+        $('#btnAdd, #btnDelete').removeAttr('disabled');
+
+        $('#validationMessage').text('');
+
+        return false;
+    });
+
+</script>
+

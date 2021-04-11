@@ -1,0 +1,315 @@
+﻿@model SchuleManager.Models.Account
+@{
+    ViewBag.Title = "Batch Verification";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<link href="~/Scripts/dataTablesScripts/dataTables.bootstrap.min.css" rel="stylesheet" />
+<link href="~/Content/jquery.dataTables.css" rel="stylesheet" />
+<script src="~/Scripts/dataTablesScripts/jquery.dataTables.min.js"></script>
+
+<script type="text/javascript">
+
+    var unverifiedAccountsDataTable;
+
+    $(document).ready(function() {
+
+        //Gets entered product details and returns pop up search modal incase of F2 press
+        $('#ProductCode').on('input keydown', function(event) {
+
+                var keycode = event.keyCode || event.which;
+
+                if (keycode === 113) { //F2 key press
+
+                    return HelpGeneralSearch('O');
+
+                } else {
+                    var data = {
+                        productCode: $(this).val()
+                    };
+
+                    $.getJSON("GetProductDetails", data, function (json) {
+
+                        if (json.length) {
+
+                            $('#ProductName').val(json[0].ProductName);
+                            
+                            if ($('#ProductCode').val() !== "" && $('#ProductName').val() !== "") {
+
+                                if (typeof unverifiedAccountsDataTable !== 'undefined' && unverifiedAccountsDataTable !== null) {
+
+                                    unverifiedAccountsDataTable.ajax.reload();
+
+
+                                } else {
+
+                                    loadUnverifiedAccounts();
+                                }
+                            }
+                        }
+
+                    });
+                }
+
+                return null;
+            });
+
+        //When Account Search Modal is closed, save and cancel buttons are enabled
+        $("#searchModal").on("hidden.bs.modal", function () {      
+
+                if ($('#ProductCode').val() !== "" && $('#ProductName').val() !== "") {
+
+                    if (typeof unverifiedAccountsDataTable !== 'undefined' && unverifiedAccountsDataTable !== null) {
+
+                        unverifiedAccountsDataTable.ajax.reload();
+
+                    } else {
+
+                        loadUnverifiedAccounts();
+
+                    }
+                }
+
+        });
+
+        $('#ProductCode').focus();
+
+    });
+
+    function loadUnverifiedAccounts() {
+
+        unverifiedAccountsDataTable = $("#unverifiedAccountsTable").DataTable({
+            "processing": true, // for show progress bar
+            "serverSide": true, // for process server side
+            "filter": true, // this is for disable filter (search box)
+            "orderMulti": false, // for disable multiple column at once
+            "ajax": {
+                "url": "/SchuleManager/Accounts/LoadUnverifiedAccounts",
+                "type": "POST",
+                "datatype": "json",
+                "data": function(d){
+                    d.productCode = $('#ProductCode').val();
+                }
+            },
+            "initComplete": function() {
+                if ($('#unverifiedAccountsTable tbody tr').length > 0) {
+
+                    $('#btnVerify').removeAttr("disabled");
+                    
+                } else {
+                    $('#btnVerify').attr("disabled", "disabled");
+                }
+            },
+            "columnDefs":
+            [
+                {
+                    "targets": [0],
+                    "visible": true,
+                    "searchable": true,
+                    "orderable": true
+                },
+                {
+                    "targets": [1],
+                    "visible": true,
+                    "searchable": true,
+                    "orderable": false
+                },
+                {
+                    "targets": [2],
+                    "visible": true,
+                    "searchable": false,
+                    "orderable": true
+                },
+                {
+                    "targets": [3],
+                    "visible": true,
+                    "searchable": false,
+                    "orderable": false
+                },
+                {
+                    "targets": [4],
+                    "visible": true,
+                    "searchable": false,
+                    "orderable": false
+                }
+            ],
+            "columns": [
+                { "data": "AccountID", "name": "AccountID", "autoWidth": true },
+                { "data": "AccountName", "name": "AccountName", "autoWidth": true },
+                { "data": "ProductCode", "name": "ProductCode", "autoWidth": true },
+                { "data": "ProductName", "name": "ProductName", "autoWidth": true },
+                { "data": "CreatedBy", "name": "CreatedBy", "autoWidth": true }
+            ]
+
+        });
+
+
+        $('#unverifiedAccountsTable tbody').on('click', 'tr', function () {
+
+            $(this).toggleClass('selected');
+
+            if (unverifiedAccountsDataTable.rows('.selected').any()) {
+                $('#validationMessage').text('Please Note Accounts Created by You will not appear for verification');
+            } 
+        });
+    }
+
+</script>
+
+<div class="row">
+    <div class="col-md-12">
+        <h2>Batch Verification</h2>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-12">
+        <div class="panel panel-default" id="search-panel" style="padding: 10px;">
+            <div class="row">
+                <div class="col-md-2">
+                    @Html.Label("Product:", new { @class = "control-label" })
+                </div>
+                <div class="col-md-4">
+                    @Html.TextBoxFor(model => model.ProductCode, new { @class = "form-control" })
+                </div>
+                <div class="col-md-2">
+                    @Html.Label("Product Name:", new { @class = "control-label" })
+                </div>
+                <div class="col-md-4">
+                    @Html.TextBoxFor(model => model.ProductName, new { @class = "form-control", disabled = true })
+                </div>
+            </div>
+        </div>
+            <div class="panel panel-default" id="buttons-panel" style="padding: 10px;">
+                <div class="row">
+                    <div class="col-md-8">
+                        <p id="validationMessage" style="color: red">Please Note Accounts Created by You will not appear for verification</p>
+                    </div>
+                    <div class="col-md-4">
+                        <button style="width: 100%" class="btn btn-primary" id="btnVerify" disabled="disabled">Verify</button>
+                    </div>
+                </div>
+            </div>
+            <div class="panel panel-default" id="accounts-panel" style="padding: 10px;">
+                <div class="row">
+                    <div class="col-md-12">  
+                        <div class="panel-body">
+                            <table id="unverifiedAccountsTable" class="table table-striped table-bordered nowrap" style="width: 100%">
+                                <thead>
+                                <tr>
+                                    <th>Account ID</th>
+                                    <th>Account Name</th>
+                                    <th>Product Code</th>
+                                    <th>Product Description</th>
+                                    <th>Created By</th>
+                                </tr>
+                                </thead>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+    </div>
+</div>
+
+<div class="modal fade" id="searchModal" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Search</h4>
+            </div>
+            <div class="modal-body" id="searchContent">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="messageModal" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body" id="messageContent">
+                <p id="message"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+
+        function HelpGeneralSearch(flag) {
+            var url = '@Url.Content("~/")' + "Search/HelpGeneralSearch";
+            $.ajax({
+                type: "POST",
+                url: url,
+                contentType: "application/json; charset=utf-8",
+                data: '{searchFlag: "' + flag + '" }',
+                dataType: "html",
+                success: function (response) {
+                    $('#searchContent').html(response);
+                    $('#searchModal').modal('show');
+                }
+            });
+        };
+
+
+    //all selected accounts will be verified on button click
+    $('#btnVerify').click(function (e) {
+
+            e.preventDefault();
+
+            var numberOfSelectedRows = unverifiedAccountsDataTable.rows('.selected').count();        
+
+            if (numberOfSelectedRows > 0) {
+
+                var selectedAccounts = new Array();;
+                var arrayIndex = 0;
+
+                $('#unverifiedAccountsTable > tbody  > tr').each(function() {
+
+                    if ($(this).hasClass("selected")) {
+
+                        var pos = unverifiedAccountsDataTable.row(this).index();
+                        var row = unverifiedAccountsDataTable.row(pos).data();
+                       
+                        selectedAccounts[arrayIndex] = row["AccountID"];
+                        arrayIndex++;
+
+                    }
+                });
+
+                var accountString = selectedAccounts.join();
+
+                $.ajax({
+                    type: "POST",
+                    url: '@Url.Action("BatchVerification", "Accounts")',
+                    data: {
+                        accounts: accountString
+                    },
+                    dataType: "json",
+                    success: function(response) {
+                        if (response) {
+                            unverifiedAccountsDataTable.ajax.reload();
+                            $('#message').text(response.message);
+                            $('#messageModal').modal('show');
+                        }
+                    }
+                });
+            } else {
+                $('#validationMessage').text('Select atleast one account');
+            }
+
+            return false;
+        });
+
+</script>
+
+

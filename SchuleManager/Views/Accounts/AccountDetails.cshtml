@@ -1,0 +1,387 @@
+﻿@model SchuleManager.Models.Account
+@{
+    ViewBag.Title = "Account Details";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<script src="~/Scripts/accounting.min.js"></script>
+
+<style type="text/css">
+    
+     .moneyInputDR {
+         text-align: right;
+         color: red;
+     }
+
+    .moneyInputCR {
+        text-align: right;
+        color: blue;
+    }
+
+    #btnBatchVerification {
+        width: 100%;
+    }
+</style>
+
+<script type="text/javascript">
+
+    $(document).ready(function () {
+
+        //Gets entered accounts details and returns pop up search modal incase of F2 press
+        $('#AccountID').on('input keydown', function (event) {
+
+            var data;
+            var keycode = event.keyCode || event.which;
+
+            if (keycode === 113) { //F2 key press
+
+                return helpSchuleAccountSearch();
+
+            } else {
+                data = {
+                    accountId: $(this).val(),
+                    accountType: 'C'
+                };
+
+                $.getJSON("GetAccountDetails", data, function (json) {
+
+                        if (json.length)
+                        {
+                            $('#ClientType').val(json[0].ClientType);
+                            $('#ClientID').val(json[0].ClientID);
+                            $('#ProductCode').val(json[0].ProductCode);
+                            $('#ProductName').val(json[0].ProductName);
+                            $('#AccountName').val(json[0].AccountName);
+                            $('#ClearBalance').val(formatNumbers(json[0].ClearBalance));
+                            $('#UnSupervisedCredit').val(formatNumbers(json[0].UnSupervisedCredit));
+                            $('#UnSupervisedDebit').val(formatNumbers(json[0].UnSupervisedDebit));
+                            $('#CreditTurnOver').val(formatNumbers(json[0].CreditTurnOver));
+                            $('#DebitTurnOver').val(formatNumbers(json[0].DebitTurnOver));
+
+                            if (json[0].IsVerified && json[0].ClosedBy !== null)
+                            {
+                                $('#btnCloseAccount').attr("disabled", "disabled");
+                                $('#btnVerify').attr("disabled", "disabled");
+                            }
+                            else if (json[0].IsVerified && json[0].ClosedBy === null)
+                            {
+                                $('#btnCloseAccount').removeAttr("disabled");
+                                $('#btnVerify').attr("disabled", "disabled");
+                            }
+                            else
+                            {
+                                $('#btnVerify').removeAttr("disabled");
+                            }
+                        }
+
+                    });
+            }
+
+            return null;
+        });
+
+        //When Account Search Modal is closed, save and cancel buttons are enabled
+        $("#searchModal").on("hidden.bs.modal", function () {
+
+            if ($('#AccountID').val() !== "" && $('#AccountName').val() !== "") {
+
+                var data = {
+                    accountId: $('#AccountID').val(),
+                    accountType: 'C'
+                };
+
+                $.getJSON("GetAccountDetails", data, function (json) {
+
+                    if (json.length) {
+
+                        $('#ClearBalance').val(formatNumbers(json[0].ClearBalance));
+                        $('#UnSupervisedCredit').val(formatNumbers(json[0].UnSupervisedCredit));
+                        $('#UnSupervisedDebit').val(formatNumbers(json[0].UnSupervisedDebit));
+                        $('#CreditTurnOver').val(formatNumbers(json[0].CreditTurnOver));
+                        $('#DebitTurnOver').val(formatNumbers(json[0].DebitTurnOver));
+
+                        if (json[0].IsVerified && json[0].ClosedBy !== null) {
+                            $('#btnCloseAccount').attr("disabled", "disabled");
+                            $('#btnVerify').attr("disabled", "disabled");
+                        }
+                        else if (json[0].IsVerified && json[0].ClosedBy === null) {
+                            $('#btnCloseAccount').removeAttr("disabled");
+                            $('#btnVerify').attr("disabled", "disabled");
+                        }
+                        else {
+                            $('#btnVerify').removeAttr("disabled");
+                        }
+                    }
+
+                });
+
+            }
+        });
+
+        $('#AccountID').focus();
+    });
+
+    function formatNumbers(amount) {
+
+        return accounting.formatMoney(amount,
+            {
+                symbol: "",
+                precision: 2,
+                thousand: ",",
+                format: {
+                    pos: "%s %v",
+                    neg: "%s (%v)",
+                    //zero: "%s  --"
+                    zero: "0"
+                }
+            });
+    }
+
+</script>
+
+<div class="row">
+    <div class="col-md-12">
+        <h2>Account Details</h2>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-12">
+        <div class="panel panel-default" id="acctDetails-panel" style="padding: 10px;">
+            <div class="row">
+                <div class="col-md-2">
+                    @Html.Label("Schule Client:", new { @class = "control-label" })
+                </div>
+                <div class="col-md-4">
+                    @Html.TextBoxFor(model => model.ClientType, new { @class = "form-control", disabled = true })
+                </div>
+                <div class="col-md-2">
+                    @Html.Label("Client ID:", new { @class = "control-label" })
+                </div>
+                <div class="col-md-4">
+                    @Html.TextBoxFor(model => model.ClientID, new { @class = "form-control", disabled = true })
+                </div>
+            </div>
+            <br/>
+            <div class="row">
+                <div class="col-md-2">
+                    @Html.Label("Product:", new { @class = "control-label" })
+                </div>
+                <div class="col-md-4">
+                    @Html.TextBoxFor(model => model.ProductCode, new { @class = "form-control", disabled = true })
+                </div>
+                <div class="col-md-6">
+                    @Html.TextBoxFor(model => model.ProductName, new { @class = "form-control", disabled = true })
+                </div>
+            </div>
+            <br/>
+            <div class="row">
+                <div class="col-md-2">
+                    @Html.Label("Account:", new { @class = "control-label manadatory" })
+                </div>
+                <div class="col-md-4">
+                    @Html.TextBoxFor(model => model.AccountID, new { @class = "form-control" })
+                </div>
+                <div class="col-md-6">
+                    @Html.TextBoxFor(model => model.AccountName, new { @class = "form-control", disabled = true })
+                </div>
+            </div>
+        </div>
+        <div class="panel panel-default" id="behindTheScenes-panel" style="padding: 10px;">
+            <div class="row">
+                <div class="col-md-2">
+                    @Html.Label("Clear Balance:", new { @class = "control-label" })
+                </div>
+                <div class="col-md-4">
+                    @Html.TextBoxFor(model => model.ClearBalance, new { @class = "form-control moneyInputCR", disabled = true })
+                </div>
+                <div class="col-md-6">
+                </div>
+            </div>
+            <br/>
+            <div class="row">
+                <div class="col-md-2">
+                    @Html.Label("Un Supervised Credit:", new { @class = "control-label" })
+                </div>
+                <div class="col-md-4">
+                    @Html.TextBoxFor(model => model.UnSupervisedCredit, new { @class = "form-control moneyInputCR", disabled = true })
+                </div>
+                <div class="col-md-2">
+                    @Html.Label("Credit Turn Over:", new { @class = "control-label" })
+                </div>
+                <div class="col-md-4">
+                    @Html.TextBoxFor(model => model.CreditTurnOver, new { @class = "form-control moneyInputCR", disabled = true })
+                </div>
+            </div>
+            <br/>
+            <div class="row">
+                <div class="col-md-2">
+                    @Html.Label("Un Supervised Debit:", new { @class = "control-label" })
+                </div>
+                <div class="col-md-4">
+                    @Html.TextBoxFor(model => model.UnSupervisedDebit, new { @class = "form-control moneyInputDR", disabled = true })
+                </div>
+                <div class="col-md-2">
+                    @Html.Label("Debit Turn Over:", new { @class = "control-label" })
+                </div>
+                <div class="col-md-4">
+                    @Html.TextBoxFor(model => model.DebitTurnOver, new { @class = "form-control moneyInputDR", disabled = true })
+                </div>
+            </div>
+        </div>
+        <div class="panel panel-default" id="buttons-panel" style="padding: 10px;">
+            <div class="row">
+                <div class="col-md-4">
+                    @Html.ActionLink("Batch Verification", "BatchVerification", "Accounts", null, new { @class = "btn btn-primary", id = "btnBatchVerification" })
+                </div>
+                <div class="col-md-4">
+                    <button style="width: 100%" class="btn btn-info" id="btnVerify" disabled="disabled">Verify Account</button>
+                </div>
+                <div class="col-md-4">
+                    <button style="width: 100%" class="btn btn-danger" id="btnCloseAccount"  disabled="disabled">Close Account</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="searchModal" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Search</h4>
+            </div>
+            <div class="modal-body" id="searchContent">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="messageModal" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body" id="messageContent">
+                <p id="message"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="closeAccountModal" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-body" id="closeAccountContent">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="acctClsModalTitle">Close Account: </h5>
+                </div>
+                <div class="modal-body">
+                    <label>Closure Reason:</label>
+                    <input type="text" id="CloseReason" class="form-control manadatory" />
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" id="btnOk" class="btn btn-primary">OK</button>
+                </div>
+                <div class="row">
+                    <p style="color: red" id="response"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+
+    function helpSchuleAccountSearch() {
+        var url = '@Url.Content("~/")' + "Search/HelpSchuleAccountSearch";
+        $.ajax({
+            type: "POST",
+            url: url,
+            contentType: "application/json; charset=utf-8",
+            dataType: "html",
+            success: function (response) {
+                $('#searchContent').html(response);
+                $('#searchModal').modal('show');
+            }
+        });
+    };
+
+    $('#btnCloseAccount').click(function(e) {
+        e.preventDefault();
+
+        var accountDetails = $('#AccountID').val() + ": " + $('#AccountName').val();
+
+        $('#acctClsModalTitle').append(accountDetails);
+
+        $('#closeAccountModal').modal('show');
+
+        return false;
+    });
+
+    $("#btnOk").click(function (e) {
+
+        e.preventDefault();
+
+        if ($('#CloseReason').val() !== "") {
+
+            $('#closeAccountModal').modal('hide');
+
+            $.ajax({
+                type: "POST",
+                url: '@Url.Action("CloseAccount", "Accounts")',
+                data: {
+                    accountId: $('#AccountID').val(),
+                    closeReason: $('#CloseReason').val()
+                },
+                dataType: "json",
+                success: function(response) {
+                    if (response) {
+                        $('#message').text(response.message);
+                        
+                        $('#messageModal').modal('show');
+                    }
+                }
+            });
+        } else {
+            $('#response').text('Please give a close reason');
+            $('#CloseReason').focus();
+        }
+
+        return false;
+
+    });
+
+    $('#btnVerify').click(function(e) {
+
+        e.preventDefault();
+
+        $.ajax({
+            type: "POST",
+            url: '@Url.Action("VerifyAccount", "Accounts")',
+            data: {
+                accountId: $('#AccountID').val()
+            },
+            dataType: "json",
+            success: function (response) {
+                if (response) {
+                    $('#message').text(response.message);
+                    $('#messageModal').modal('show');
+                }
+            }
+        });
+
+        return false;
+
+    });
+
+</script>
+

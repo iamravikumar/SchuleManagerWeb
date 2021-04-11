@@ -1,0 +1,353 @@
+﻿@model SchuleManager.Models.StaticData
+@{
+    ViewBag.Title = "Static Data Maintenance";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<link href="~/Scripts/dataTablesScripts/dataTables.bootstrap.min.css" rel="stylesheet" />
+<link href="~/Content/jquery.dataTables.css" rel="stylesheet" />
+<script src="~/Scripts/dataTablesScripts/jquery.dataTables.min.js"></script>
+
+<script type="text/javascript">
+
+    var dataTable;
+
+    $(document).ready(function() {
+
+        loadStaticData();
+
+        $('#StaticDataType').change(function () {
+
+            if (typeof dataTable !== 'undefined' && dataTable !== null) {
+                dataTable.ajax.reload(function () {
+                    if (!dataTable.data().count()) {
+                        $('#btnEdit').attr('disabled', 'disabled');
+                    } else {
+                        $('#btnEdit').removeAttr('disabled');
+                    }
+                });
+
+                $('#sdPanelTitle').text($("#StaticDataType option:selected").text());
+
+            } else {
+                loadStaticData();
+            }
+
+            $('#StaticDataCode, #Description').val('').attr('disabled', 'disabled');
+            $('#Deleted').prop('checked', false).attr('disabled', 'disabled');
+        });
+    });  
+    
+    function loadStaticData() {
+
+        dataTable = $("#staticDataTable").DataTable({
+            "processing": true, // for show progress bar
+            "serverSide": true, // for process server side
+            "filter": false, // this is for disable filter (search box)
+            "orderMulti": false, // for disable multiple column at once
+            "paging": false,
+            "info": false,
+            "ajax": {
+                "url": "/SchuleManager/SystemStaticData/LoadStaticData",
+                "type": "POST",
+                "datatype": "json",
+                "data": function (d) {
+                    d.staticDataType = $('#StaticDataType').val();
+                }
+            },
+            "columnDefs":
+            [
+                {
+                    "targets": [0],
+                    "visible": true,
+                    "searchable": false,
+                    "orderable": false
+                },
+                {
+                    "targets": [1],
+                    "visible": true,
+                    "searchable": false,
+                    "orderable": false
+                },
+                {
+                    "targets": [2],
+                    "visible": false,
+                    "searchable": false,
+                    "orderable": false
+                }
+            ],
+            "columns": [
+                { "data": "StaticDataCode", "name": "StaticDataCode", "autoWidth": true },
+                { "data": "Description", "name": "Description", "autoWidth": true },
+                { "data": "Deleted", "name": "Deleted", "autoWidth": true }
+            ]
+        });
+
+        $('#staticDataTable tbody').on('click', 'tr', function () {
+
+            if ($(this).hasClass('selected')) {
+                $(this).removeClass('selected');
+                $('#btnEdit').attr('disabled', 'disabled');
+            }
+            else {
+                dataTable.$('tr.selected').removeClass('selected');
+                $(this).addClass('selected');
+
+                var pos = dataTable.row(this).index();
+                var row = dataTable.row(pos).data();
+
+                $('#StaticDataCode').val(row['StaticDataCode']);
+                $('#Description').val(row['Description']);
+                $('#Deleted').prop('checked', row['Deleted']);
+
+                $('#btnEdit').removeAttr('disabled');
+            }
+        });
+
+        $('#sdPanelTitle').text($("#StaticDataType option:selected").text());
+    }
+
+</script>
+
+<div class="row">
+    <div class="col-md-12">
+        <h3>Static Data Maintenance</h3>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-10">
+        <div class="panel panel-default">
+            <form class="form-horizontal">
+                <div class="panel-body">
+                    <div class="form-group row">
+                        @Html.Label("Static Data:", new { @class = "col-sm-2 col-form-label manadatory" })
+                        <div class="col-sm-5">
+                            @Html.DropDownList("StaticDataType", new List<SelectListItem> { new SelectListItem { Text = @"Title Of Courtesy", Value = "T" }, new SelectListItem { Text = @"Relationships", Value = "P" }, new SelectListItem { Text = @"Religions", Value = "R" }, new SelectListItem { Text = @"Nationality", Value = "N" }, new SelectListItem { Text = @"Class Streams", Value = "S" }, new SelectListItem { Text = @"Houses", Value = "H" }, new SelectListItem { Text = @"Education", Value = "E" }, new SelectListItem { Text = @"Subjects", Value = "J" }, new SelectListItem { Text = @"Suppliers", Value = "L" }}, new { @class = "form-control" })
+                        </div>
+                        <div class="col-sm-3">
+                            <p id ="validationMessage" style="color: red"></p>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h2 id="sdPanelTitle" class="panel-title">Summary Info</h2>
+            </div>
+            <div class="panel-body" style="height: 300px">
+                <div class="table-responsive">
+                    <table id="staticDataTable" class="table table-striped table-bordered nowrap" style="width: 100%; font-size: 9px">
+                        <thead>
+                        <tr>
+                            <th class="col-sm-3">Static Data Code</th>
+                            <th>Description</th>
+                            <th></th>
+                        </tr>
+                        </thead>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="panel panel-default">
+            <form class="form-horizontal">
+                <div class="panel-body">
+                    <div class="form-group row">
+                        @Html.Label("Static Data Code:", new { @class = "col-sm-3 col-form-label manadatory" })
+                        <div class="col-sm-7">
+                            @Html.TextBoxFor(model => model.StaticDataCode, new { @class = "form-control", disabled = true, maxlength = 5 })
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        @Html.Label("Description:", new { @class = "col-sm-3 col-form-label manadatory" })
+                        <div class="col-sm-5">
+                            @Html.TextBoxFor(model => model.Description, new { @class = "form-control", disabled = true, maxlength = 30 })
+                        </div>
+                        <div class="col-sm-2">
+                            <div class="custom-control custom-checkbox">
+                                @Html.CheckBoxFor(model => model.Deleted, new {@class = "custom-control-input", disabled = true})
+                                @Html.Label("Deleted", new {@class = "custom-control-label" })
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="panel panel-default" style="height: 570px;">
+            <div class="panel-body table-responsive">
+                <table class="table table-bordered text-center">
+                    <tbody>
+                    <tr>
+                        <td>
+                            <button class="btn btn-block btn-primary" id="btnAdd" type="button">Add</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <button class="btn btn-block btn-secondary" disabled="disabled" id="btnEdit" type="button">Edit</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <button class="btn btn-block btn-success" disabled="disabled" id="btnSave" type="button">Save</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <button class="btn btn-block btn-warning" id="btnCancel" disabled="disabled" type="button">Cancel</button>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modal-success" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content bg-success">
+            <div class="modal-header">
+                <h4 class="modal-title">Success Modal</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <div class="modal-body" id="success-content">
+                <p id="success-message"></p>
+            </div>
+            <div class="modal-footer justify-content-between">
+                <button type="button" class="btn btn-outline-light" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="modal-failure" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content bg-danger">
+            <div class="modal-header">
+                <h4 class="modal-title">Danger Modal</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <div class="modal-body" id="failure-content">
+                <p id="failure-message"></p>
+            </div>
+            <div class="modal-footer justify-content-between">
+                <button type="button" class="btn btn-outline-light" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-outline-light">Save changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+
+    var addOrEdit;
+
+    $('#btnAdd').click(function(e) {
+
+        e.preventDefault();
+
+        $('#StaticDataCode, #Description').removeAttr('disabled').val('');
+
+        $('#btnSave, #btnCancel').removeAttr('disabled');
+
+        $('#btnAdd, #btnEdit').attr('disabled', 'disabled');
+
+        addOrEdit = 'A';
+
+        $('#StaticDataCode').focus();
+
+        return false;
+    });
+
+    $('#btnEdit').click(function(e) {
+
+        e.preventDefault();
+
+        $('#Deleted, #Description').removeAttr('disabled');
+
+        $('#btnAdd, #btnEdit').attr('disabled', 'disabled');
+
+        $('#btnSave, #btnCancel').removeAttr('disabled');
+
+        addOrEdit = 'E';
+
+        $('#Description').focus();
+
+        return false;
+    });
+
+    $('#btnSave').click(function(e) {
+
+        e.preventDefault();
+
+        if ($('#StaticDataCode').val() !== "" && $('#Description').val() !== "") {
+
+            var staticData = {
+                StaticDataType: $('#StaticDataType').val(),
+                StaticDataCode: $('#StaticDataCode').val(),
+                Description:$('#Description').val(),
+                Deleted: $('#Deleted').prop('checked')
+            }
+
+            $.ajax({
+                type: "POST",
+                url: '@Url.Action("AddEditStaticData", "SystemStaticData")',
+                data: {
+                    staticData :staticData,
+                    action: addOrEdit
+                },
+                dataType: "json",
+                success: function (response) {
+                    if (response) {
+                        if (response.success) {
+                            $('#success-message').text(response.message);
+                            $('#modal-success').modal('show');
+
+                            dataTable.ajax.reload();
+
+                            $('#validationMessage').text('');
+                        } else {
+                            $('#failure-message').text(response.message);
+                            $('#modal-failure').modal('show');
+                        }
+                    }
+                }
+            }).done(function () {
+                $('#StaticDataCode, #Description').val('').attr('disabled', 'disabled');
+                $('#Deleted').prop('checked', false).attr('disabled', 'disabled');
+
+                $('#btnSave, #btnCancel').attr('disabled', 'disabled');
+                $('#btnAdd, #btnEdit').removeAttr('disabled');
+            });
+        } else {
+            $('#validationMessage').text('Code and description must be given');
+            $('#StaticDataCode').focus();
+        }
+
+        return false;
+    });
+
+    $('#btnCancel').click(function(e) {
+
+        e.preventDefault();
+
+        $('#btnAdd, #btnEdit').removeAttr('disabled');
+
+        $('#StaticDataCode, #Description, #btnSave, #btnCancel').val('').attr('disabled', 'disabled');
+
+        $('#Deleted').prop('checked', false).attr('disabled', 'disabled');
+
+        $('#btnAdd').focus();
+
+        return false;
+    });
+
+</script>

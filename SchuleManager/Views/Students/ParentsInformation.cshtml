@@ -1,0 +1,632 @@
+﻿@using SchuleManager.Models
+@model StudentParent
+@{
+    ViewBag.Title = "Parent's Information";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<link href="~/Scripts/dataTablesScripts/dataTables.bootstrap.min.css" rel="stylesheet" />
+<link href="~/Content/jquery.dataTables.css" rel="stylesheet" />
+<script src="~/Scripts/dataTablesScripts/jquery.dataTables.min.js"></script>
+
+<style type="text/css">
+    #studentParentsTable td, #studentParentsTable th {
+        border: 1px solid #ddd;
+        padding: 8px;
+    }
+</style>
+
+
+<script type="text/javascript">
+
+    var spDataTable, studentParentsData, searchFlag, test;
+
+    $(document).ready(function() {
+
+        //Gets student's details and returns pop up search modal incase of F2 press
+        $('#StudentID').on('input keydown', function(event) {
+
+                var data;
+                var keycode = event.keyCode || event.which;
+
+                if (keycode === 113) { //F2 key press
+
+                    searchFlag = 'S';
+
+                    return helpGeneralSearch(searchFlag);
+
+                } else if (keycode === 8) { //Backspace key
+                    $('#StudentNames').val('');
+                } else {
+                    data = {
+                        studentId: $(this).val()
+                    };
+
+                    $.getJSON("GetStudentDetails",
+                        data,
+                        function(json) {
+                            if (json.length) {
+
+                                $('#StudentNames').val(json[0].SurName + ' ' + json[0].OtherNames);
+
+                                if ($('#StudentID').val() !== '' && $('#StudentNames').val() !== '') {
+
+                                    var parameter = {
+                                        studentId: $('#StudentID').val()
+                                    };
+
+                                    $.getJSON("LoadStudentParents", parameter, function (json) {
+
+                                        if (json.length) {
+
+                                            studentParentsData = json;
+
+                                            if (typeof spDataTable !== 'undefined' && spDataTable !== null) {
+
+                                                spDataTable.clear().draw();
+
+                                                spDataTable.rows.add(studentParentsData);
+
+                                                spDataTable.columns.adjust().draw();
+
+                                                resetInputs();
+
+                                            } else {
+
+                                                loadStudentParents();
+
+                                                resetInputs();
+                                            }
+
+                                        } else {
+
+                                            studentParentsData = "";
+
+                                            if (typeof spDataTable !== 'undefined' && spDataTable !== null) {
+
+                                                spDataTable.clear().draw();
+
+                                                spDataTable.rows.add(studentParentsData);
+
+                                                spDataTable.columns.adjust().draw();
+
+                                                resetInputs();
+
+                                            } else {
+
+                                                loadStudentParents();
+
+                                                resetInputs();
+                                            }
+
+                                        }
+                                    });
+
+
+                                    $('#btnAddStudentParent, #btnCancel').removeAttr('disabled');
+                                }
+
+                            }
+                        });
+                }
+
+                return null;
+            });
+
+        //Gets parent's details and returns pop up search modal incase of F2 press
+        $('#ParentID').on('input keydown', function (event) {
+
+            var data;
+            var keycode = event.keyCode || event.which;
+
+            if (keycode === 113) { //F2 key press
+
+                searchFlag = 'P';
+
+                return helpGeneralSearch(searchFlag);
+
+            } else if (keycode === 8) { //Backspace key
+                $('#ParentsName').val('');
+            } else {
+                data = {
+                    parentId: $(this).val()
+                };
+
+                $.getJSON("GetParentDetails",
+                    data,
+                    function (json) {
+                        if (json.length) {
+
+                            $('#ParentsName').val(json[0].SurName + ' ' + json[0].OtherNames);
+
+                        }
+                    });
+            }
+
+            return null;
+        });
+
+        //When student Search Modal is closed, add and cancel buttons are enabled
+        $("#searchModal").on("hidden.bs.modal", function () {
+
+            if ($('#StudentID').val() !== "" && $('#StudentNames').val() !== "" && searchFlag === 'S') {
+
+                var parameter = {
+                    studentId: $('#StudentID').val()
+                };
+
+                $.getJSON("LoadStudentParents", parameter, function (json) {
+
+                        if (json.length) {
+
+                            studentParentsData = json;
+
+                            if (typeof spDataTable !== 'undefined' && spDataTable !== null) {
+
+                                spDataTable.clear().draw();
+
+                                spDataTable.rows.add(studentParentsData);
+
+                                spDataTable.columns.adjust().draw();
+
+                                resetInputs();
+
+                            } else {
+
+                                loadStudentParents();
+
+                                resetInputs();
+                            }
+
+                        } else {
+
+                            studentParentsData = "";
+
+                            if (typeof spDataTable !== 'undefined' && spDataTable !== null) {
+
+                                spDataTable.clear().draw();
+
+                                spDataTable.rows.add(studentParentsData);
+
+                                spDataTable.columns.adjust().draw();
+
+                                resetInputs();
+
+                            } else {
+
+                                loadStudentParents();
+
+                                resetInputs();
+                            }
+                     
+                        }
+                    });
+
+                $('#btnAddStudentParent, #btnCancel').removeAttr('disabled');
+
+            }
+        });
+
+    });
+
+    function loadStudentParents() {
+
+        spDataTable = $("#studentParentsTable").DataTable({
+            "processing": true, // for show progress bar
+            "serverSide": false, // for process server side
+            "filter": false, // this is for disable filter (search box)
+            "orderMulti": false, // for disable multiple column at once
+            "paging": false,
+            "info": false,
+            "data": studentParentsData,
+            "columnDefs":
+            [
+                {
+                    "targets": [0],
+                    "visible": true,
+                    "searchable": false,
+                    "orderable": false
+                },
+                {
+                    "targets": [1],
+                    "visible": true,
+                    "searchable": false,
+                    "orderable": false
+                },
+                {
+                    "targets": [2],
+                    "visible": false,
+                    "searchable": false,
+                    "orderable": false
+                },
+                {
+                    "targets": [3],
+                    "visible": true,
+                    "searchable": false,
+                    "orderable": false
+                },
+                {
+                    "targets": [4],
+                    "visible": false,
+                    "searchable": false,
+                    "orderable": false
+                },
+                {
+                    "targets": [5],
+                    "visible": true,
+                    "searchable": false,
+                    "orderable": false
+                },
+                {
+                    "targets": [6],
+                    "visible": true,
+                    "searchable": false,
+                    "orderable": false
+                },
+                {
+                    "targets": [7],
+                    "visible": true,
+                    "searchable": false,
+                    "orderable": false
+                }
+            ],
+            "columns": [
+                { "data": "ParentID", "name": "ParentID", "autoWidth": true },
+                { "data": "TitleCode", "name": "TitleCode", "autoWidth": true },
+                { "data": "ParentName", "name": "ParentName", "autoWidth": true },
+                { "data": "Relationship", "name": "Relationship", "autoWidth": true },
+                { "data": "RshipCode", "name": "RshipCode", "autoWidth": true },
+                { "data": "_LiveswithStudent", "name": "_LiveswithStudent", "autoWidth": true },
+                { "data": "_PaysFees", "name": "_PaysFees", "autoWidth": true },
+                { "data": "MoreInfo", "name": "MoreInfo", "autoWidth": true }
+            ]
+        });
+
+        $('#studentParentsTable tbody').on('click', 'tr', function () {
+
+            if ($(this).hasClass('selected')) {
+                $(this).removeClass('selected');
+            }
+            else {
+                spDataTable.$('tr.selected').removeClass('selected');
+                $(this).addClass('selected');
+                var pos = spDataTable.row(this).index();
+                var row = spDataTable.row(pos).data();
+
+                $('#ParentID').val(row['ParentID']);
+                $('#ParentsName').val(row['ParentName']);
+                $('#RshipCode').val($.trim(row['RshipCode']));
+
+                if (row['_LiveswithStudent'] === "YES") {
+                    $('#LiveswithStudent').prop("checked", true);
+                } else {
+                    $('#LiveswithStudent').prop("checked", false);
+                }
+
+                if (row['_PaysFees'] === "YES") {
+                    $('#PaysFees').prop("checked", true);
+                } else {
+                    $('#PaysFees').prop("checked", false);
+                }
+
+                $('#MoreInfo').val(row['MoreInfo']);
+
+                $('#btnEditStudentParent').removeAttr('disabled');
+            }
+
+        });
+    };
+
+</script>
+
+<div class="row">
+    <div class="col-md-12">
+        <h2>Parent's Information</h2>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-10">
+        <div class="panel panel-default" style="padding: 10px">
+            <div class="row">
+                <div class="col-md-2">
+                    @Html.Label("Student ID:", new {@class = "control-label"})
+                </div>
+                <div class="col-md-3">
+                    @Html.TextBox("StudentID", null, new {@class = "form-control"})
+                </div>
+                <div class="col-md-5">
+                    @Html.TextBox("StudentNames", null, new {@class = "form-control", disabled = true})
+                </div>
+            </div>
+        </div>
+        <div class="panel panel-default" id="parentsInfo-panel" style="padding: 10px; height: 300px">
+            <table id="studentParentsTable" class="table table-striped table-bordered nowrap" style="width: 100%">
+                <caption>Summary Information</caption>
+                <thead>
+                <tr>
+                    <th>Parent ID</th>
+                    <th>Title</th>
+                    <th>Parent's Name</th>
+                    <th>Relationship</th>
+                    <th style="display: none">RshipCode</th>
+                    <th>Lives With Student</th>
+                    <th>Pays Fees</th>
+                    <th>More Information</th>
+                </tr>
+                </thead>
+            </table>
+        </div>
+        <div class="panel panel-default" id="parentsDetails-panel" style="padding: 10px">
+            <div class="panel-heading">Parent Details</div><br/>
+            <div class="row">
+                <div class="col-md-2">
+                    @Html.Label("Parent ID:", new {@class = "control-label manadatory"})
+                </div>
+                <div class="col-md-8">
+                    @Html.TextBoxFor(model => model.ParentID, new {@class = "form-control", required = "required", disabled = true })
+                </div>
+            </div>
+            <br/>
+            <div class="row">
+                <div class="col-md-2">
+                    @Html.Label("Parent Names:", new {@class = "control-label"})
+                </div>
+                <div class="col-md-8">
+                    @Html.TextBox("ParentsName", null, new {@class = "form-control", disabled = true })
+                </div>
+            </div>
+            <br/>
+            <div class="row">
+                <div class="col-md-2">
+                    @Html.Label("Relationship:", new {@class = "control-label manadatory"})
+                </div>
+                <div class="col-md-8">
+                    @Html.DropDownListFor(model => model.RshipCode, new SelectList((List<Relationships>) ViewData["Relationships"], "RshipCode", "Relationship"), "- Select -", new {@class = "form-control", required = "required", disabled = true})
+                </div>
+            </div>
+            <br/>
+            <div class="row">
+                <div class="col-md-1">
+                    @Html.CheckBoxFor(model => model.LiveswithStudent, new { disabled = true })
+                </div>
+                <div class="col-md-2">
+                    @Html.Label("Lives With Student:", new {@class = "control-label" })
+                </div>
+                <div class="col-md-1">
+                    @Html.CheckBoxFor(model => model.PaysFees, new { disabled = true })
+                </div>
+                <div class="col-md-3">
+                    @Html.Label("Pays Student's Fees:", new {@class = "control-label", })
+                </div>
+                <div class="col-md-3">
+                </div>
+            </div>
+            <br/>
+            <div class="row">
+                <div class="col-md-2">
+                    @Html.Label("More Information:", new {@class = "control-label"})
+                </div>
+                <div class="col-md-8">
+                    @Html.TextAreaFor(model => model.MoreInfo, new {@class = "form-control", disabled = true})
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="panel panel-default" id="buttons-panel" style="padding: 10px; height: 665px">
+            <div class="row">
+                <button style="width: 100%" class="btn btn-primary" id="btnAddStudentParent" disabled="disabled">Add</button>
+            </div>
+            <br />
+            <div class="row">
+                <button style="width: 100%" class="btn btn-info" id="btnEditStudentParent" disabled="disabled">Edit</button>
+            </div>
+            <br />
+            <div class="row">
+                <button style="width: 100%" class="btn btn-success" id="btnSaveStudentParent" disabled="disabled">Save</button>
+            </div>
+            <br />
+            <div class="row">
+                <button style="width: 100%" class="btn btn-danger" id="btnCancel" disabled="disabled">Cancel</button>
+            </div>
+            <br />
+            <div class="row">
+                <p id="response" style="color: red;"></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="searchModal" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Search</h4>
+            </div>
+            <div class="modal-body" id="searchContent">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="messageModal" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body" id="messageContent">
+                <p id="message"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script type="text/javascript">
+
+    var option;
+
+    function helpGeneralSearch(flag) {
+        var url = '@Url.Content("~/")' + "Search/HelpGeneralSearch";
+        $.ajax({
+            type: "POST",
+            url: url,
+            data: '{searchFlag: "' + flag + '" }',
+            contentType: "application/json; charset=utf-8",
+            dataType: "html",
+            success: function (response) {
+                $('#searchContent').html(response);
+                $('#searchModal').modal('show');
+            }
+        });
+    };
+
+    function resetInputs() {
+
+        if ($('#studentParentsTable tbody tr').hasClass('selected')) {
+            $(this).removeClass('selected');
+        }
+        
+        $('#ParentID, #ParentsName, #RshipCode, #MoreInfo').val('');
+
+        $('#LiveswithStudent, #PaysFees').prop("checked", false);
+    }
+
+    $('#btnAddStudentParent').click(function(e) {
+
+        e.preventDefault();
+
+        $('#StudentID, #btnEditStudentParent').attr('disabled', 'disabled');
+
+        resetInputs();
+
+        $('#btnSaveStudentParent, #ParentID, #RshipCode, #LiveswithStudent, #PaysFees, #MoreInfo').removeAttr('disabled');
+        
+        option = 'A';
+
+        $(this).attr('disabled', 'disabled');
+
+        return false;
+    });
+
+    $('#btnEditStudentParent').click(function (e) {
+
+        e.preventDefault();
+
+        $('#btnSaveStudentParent, #RshipCode, #LiveswithStudent, #PaysFees, #MoreInfo').removeAttr('disabled');
+
+        $('#btnAddStudentParent, #btnEditStudentParent').attr('disabled', 'disabled');
+
+        option = 'E';
+
+        return false;
+    });
+
+    $('#btnSaveStudentParent').click(function (e) {
+
+        e.preventDefault();
+
+        var studentParent = {
+            StudentID: $('#StudentID').val(),
+            ParentID: $('#ParentID').val(),
+            RshipCode: $('#RshipCode').val(),
+            LiveswithStudent: $('#LiveswithStudent').is(':checked') ? true : false,
+            PaysFees: $('#PaysFees').is(':checked') ? true : false,
+            MoreInfo: $('#MoreInfo').val()
+        }
+
+        $.ajax({
+            type: "POST",
+            url: '@Url.Action("AddEditStudentParents", "Students")',
+            data: {
+                studentParents: studentParent,
+                action: option
+            },
+            dataType: "json",
+            success: function(response) {
+                if (response) {
+                    $('#message').text(response.message);
+                    $('#messageModal').modal('show');
+                }
+            }
+        }).done(function () {
+
+            var parameter = {
+                studentId: $('#StudentID').val()
+            };
+
+            $.getJSON("LoadStudentParents", parameter, function (json) {
+
+                if (json.length) {
+
+                    studentParentsData = json;
+
+                    if (typeof spDataTable !== 'undefined' && spDataTable !== null) {
+
+                        spDataTable.clear().draw();
+
+                        spDataTable.rows.add(studentParentsData);
+
+                        spDataTable.columns.adjust().draw();
+
+                        resetInputs();
+
+                    } else {
+
+                        loadStudentParents();
+
+                        resetInputs();
+                    }
+
+                } else {
+
+                    studentParentsData = "";
+
+                    if (typeof spDataTable !== 'undefined' && spDataTable !== null) {
+
+                        spDataTable.clear().draw();
+
+                        spDataTable.rows.add(studentParentsData);
+
+                        spDataTable.columns.adjust().draw();
+
+                        resetInputs();
+
+                    } else {
+
+                        loadStudentParents();
+
+                        resetInputs();
+                    }
+
+                }
+            });
+
+        });
+
+        return false;
+    });
+
+
+    $('#btnCancel').click(function (e) {
+
+        e.preventDefault();
+
+        resetInputs();
+
+        $('#btnSaveStudentParent, #btnEditStudentParent').attr('disabled', 'disabled');
+
+        $('#StudentID').removeAttr('disabled');
+
+        return false;
+    });
+
+</script>

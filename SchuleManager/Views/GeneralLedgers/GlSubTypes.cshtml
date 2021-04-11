@@ -1,0 +1,353 @@
+﻿@model SchuleManager.Models.GlSubTypes
+@{
+    ViewBag.Title = "Maintain GL Sub Types";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<link href="~/Scripts/dataTablesScripts/dataTables.bootstrap.min.css" rel="stylesheet" />
+<link href="~/Content/jquery.dataTables.css" rel="stylesheet" />
+<script src="~/Scripts/dataTablesScripts/jquery.dataTables.min.js"></script>
+
+<script type="text/javascript">
+
+    var dataTable;
+
+    $(document).ready(function () {
+
+        $('#GlType').focus();
+
+        $('#GlType').change(function () {
+
+            $('#GLSubTypeCode, #GLSubType').val('');
+
+            if (typeof dataTable !== 'undefined' && dataTable !== null) {
+                dataTable.ajax.reload(function () {
+                    if ($('#GlType').val() !== '') {
+                        $('#btnAdd').removeAttr('disabled');
+                    } else {
+                        $('#btnAdd, #btnEdit').attr('disabled', 'disabled');
+                    }
+                });
+
+            } else {
+                loadGlSubTypes();
+            }
+        });
+
+    });
+
+    function loadGlSubTypes()
+    {
+        dataTable = $("#glSubTypesTable").DataTable({
+            "processing": true, // for show progress bar
+            "serverSide": true, // for process server side
+            "filter": false, // this is for disable filter (search box)
+            "orderMulti": false, // for disable multiple column at once
+            "paging": false,
+            "info": false,
+            "ajax": {
+                "url": "/SchuleManager/GeneralLedgers/LoadGlSubTypes",
+                "type": "POST",
+                "datatype": "json",
+                "data": function (d) {
+                    d.glType = $('#GlType').val();
+                }
+            },
+            "columnDefs":
+            [
+                {
+                    "targets": [0],
+                    "visible": true,
+                    "searchable": false,
+                    "orderable": false
+                },
+                {
+                    "targets": [1],
+                    "visible": true,
+                    "searchable": false,
+                    "orderable": false
+                },
+                {
+                    "targets": [2],
+                    "visible": true,
+                    "searchable": false,
+                    "orderable": false
+                }
+
+            ],
+            "columns": [
+                { "data": "GLSubTypeCode", "name": "GLSubTypeCode", "autoWidth": true },
+                { "data": "GLSubType", "name": "GLSubType", "autoWidth": true },
+                { "data": "Deleted", "name": "Deleted", "autoWidth": true }
+            ]
+        });
+
+        $('#glSubTypesTable tbody').on('click', 'tr', function () {
+
+            if ($(this).hasClass('selected')) {
+                $(this).removeClass('selected');
+                $('#btnEdit, #btnDelete, #btnSave').attr('disabled');
+            }
+            else {
+                dataTable.$('tr.selected').removeClass('selected');
+                $(this).addClass('selected');
+
+                var pos = dataTable.row(this).index();
+                var row = dataTable.row(pos).data();
+
+                $('#GLSubTypeCode').val(row['GLSubTypeCode']);
+                $('#GLSubType').val(row['GLSubType']);
+
+                $('#btnEdit, #btnDelete, #btnSave').removeAttr('disabled', 'disabled');
+            }
+        });
+    }
+
+</script>
+
+<div class="row">
+    <div class="col-md-12">
+        <h3>GL Sub Types Maintenance</h3>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-10">
+        <div class="panel panel-default">
+            <form class="form-horizontal">
+                <div class="panel-body">
+                    <div class="form-group row">
+                        @Html.Label("GL Type:", new {@class = "col-sm-2 col-form-label manadatory" })
+                        <div class="col-sm-3">
+                            @Html.DropDownList("GlType", null, "- Select GL Type -", new { @class = "form-control" })
+                        </div>
+                        <div class="col-sm-5">
+                            @Html.TextBox("GLShortCode", null, new { @class = "form-control", disabled = true })
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        @Html.Label("GL Sub Type:", new { @class = "col-sm-2 col-form-label manadatory" })
+                        <div class="col-sm-3">
+                            @Html.TextBoxFor(model => model.GLSubTypeCode, null, new { @class = "form-control", disabled = true })
+                        </div>
+                        <div class="col-sm-5">
+                            @Html.TextBoxFor(model => model.GLSubType, null, new {@class = "form-control", disabled = true})
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="panel panel-default" style="height: 400px">
+            <div class="panel-body">
+                <table id="glSubTypesTable" class="table table-striped table-bordered nowrap" style="width: 100%;">
+                    <thead>
+                    <tr>
+                        <th>GL SubType</th>
+                        <th>Description</th>
+                        <th>Is Deleted</th>
+                    </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="panel panel-default" style="height: 540px;">
+            <div class="panel-body table-responsive">
+                <table class="table table-bordered text-center">
+                    <tbody>
+                        <tr>
+                            <td>
+                                <button class="btn btn-block btn-primary" id="btnAdd" type="button">Add</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <button class="btn btn-block btn-secondary" disabled="disabled" id="btnEdit" type="button">Edit</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <button class="btn btn-block btn-success" disabled="disabled" id="btnSave" type="button">Save</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <button class="btn btn-block btn-warning" id="btnCancel" disabled="disabled" type="button">Cancel</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <button class="btn btn-block btn-danger" id="btnDelete" disabled="disabled" type="button">Delete</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modal-success" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content bg-success">
+            <div class="modal-header">
+                <h4 class="modal-title">Success Modal</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <div class="modal-body" id="success-content">
+                <p id="success-message"></p>
+            </div>
+            <div class="modal-footer justify-content-between">
+                <button type="button" class="btn btn-outline-light" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="modal-failure" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content bg-danger">
+            <div class="modal-header">
+                <h4 class="modal-title">Danger Modal</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <div class="modal-body" id="failure-content">
+                <p id="failure-message"></p>
+            </div>
+            <div class="modal-footer justify-content-between">
+                <button type="button" class="btn btn-outline-light" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-outline-light">Save changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+
+    var addOrEdit;
+
+    $('#btnAdd').click(function(e) {
+
+        e.preventDefault();
+
+        $("#GlType, #btnAdd, #btnEdit, #btnDelete").attr('disabled', 'disabled');
+
+        $("#GLSubType, #btnSave, #btnCancel").removeAttr('disabled');
+
+        addOrEdit = 'A';
+
+        $('#GLSubType').focus();
+
+        return false;
+
+    });
+
+    $('#btnEdit').click(function(e) {
+
+        e.preventDefault();
+
+        $("#GlType, #btnAdd, #btnEdit, #btnDelete").attr('disabled', 'disabled');
+
+        $("#GLSubType, #btnSave, #btnCancel").removeAttr('disabled');
+
+        addOrEdit = 'E';
+
+        $('#GLSubType').focus();
+
+        return false;
+    });
+
+    $('#btnSave').click(function (e) {
+
+        e.preventDefault();
+
+        var glSubType = {
+            GLSubTypeCode: $('#GLSubTypeCode').val(),
+            GLSubType: $('#GLSubType').val(),
+            GLTypeCode: $('#GlType').val()
+        };
+
+        $.ajax({
+            type: "POST",
+            url: '@Url.Action("AddEditGlSubTypes", "GeneralLedgers")',
+            data: {
+                glSubTypes: glSubType,
+                action: addOrEdit
+            },
+            dataType: "json",
+            success: function(response) {
+                if (response) {
+                    dataTable.ajax.reload();
+                    if (response.success) {
+                        $('#success-message').text(response.message);
+                        $('#modal-success').modal('show');
+                    } else {
+                        $('#failure-message').text(response.message);
+                        $('#modal-failure').modal('show');
+                    } 
+                }
+            }
+        });
+
+        return false;
+
+    });
+
+    $('#btnDelete').click(function (e) {
+
+        e.preventDefault();
+
+        var glSubType = {
+            GLSubTypeCode: $('#GLSubTypeCode').val(),
+            GLSubType: $('#GLSubType').val(),
+            GLTypeCode: $('#GlType').val()
+        };
+
+        $.ajax({
+            type: "POST",
+            url: '@Url.Action("AddEditGlSubTypes", "GeneralLedgers")',
+            data: {
+                glSubTypes: glSubType,
+                action: 'D'
+            },
+            dataType: "json",
+            success: function (response) {
+                if (response) {
+                    dataTable.ajax.reload();
+                    if (response.success) {
+                        $('#success-message').text(response.message);
+                        $('#modal-success').modal('show');
+                    } else {
+                        $('#failure-message').text(response.message);
+                        $('#modal-failure').modal('show');
+                    }
+                }
+            }
+        });
+
+        return false;
+
+    });
+
+    $('#btnCancel').click(function (e) {
+
+        e.preventDefault();
+
+        $('#GlType, #GLSubTypeCode, #GLSubType').val('');
+
+        dataTable.clear().draw();
+
+        $('#GlType, #btnAdd').removeAttr('disabled');
+
+        $('#GLSubTypeCode, #GLSubType, #btnEdit, #btnSave, #btnCancel, #btnDelete').attr('disabled', 'disabled');
+
+        return false;
+
+    });
+
+</script>

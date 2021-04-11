@@ -1,0 +1,636 @@
+﻿@model SchuleManager.Models.FeesBankPaymentsViewModel
+@{
+    ViewBag.Title = "Fees Bank Payments";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style type="text/css">  
+    .panel {
+        padding: 10px;
+    }
+    .moneyInputDR {
+        text-align: right;
+        color: red;
+    }
+    .moneyInputCR {
+        text-align: right;
+        color: blue;
+    }
+    .moneyInput {
+        text-align: right;
+    }
+    .amountPaidInput {
+        text-align: right;
+    }
+
+    /* Chrome, Safari, Edge, Opera */
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    /* Firefox */
+    input[type=number] {
+        -moz-appearance: textfield;
+    }
+    #paymentDetailsTable {
+        border-collapse: collapse;
+        border: 1px solid black;
+    }
+</style>
+<script src="~/Scripts/accounting.min.js"></script>
+
+<script type="text/javascript">
+
+    $(document).ready(function () {
+        $(".datePickers").datepicker({
+            dateFormat: 'dd-mm-yy'
+        });
+
+        //When Account Search Modal is closed, bill details are loaded
+        $("#searchModal").on("hidden.bs.modal", function () {
+            if ($('#StudentAccount_AccountID').val() !== "") {
+                loadBillDetails();
+            }
+        });
+
+        //Gets entered accounts details and brings search modal with F2 press
+        $('#StudentAccount_AccountID').on('input keydown', function(event) {
+           
+            var keycode = event.keyCode || event.which;
+            if (keycode === 113) { //F2 key press
+                return helpGeneralSearch("A");
+            } else {
+                var data = {
+                    accountId: $(this).val(),
+                    accountType: 'C'
+                };
+
+                $.getJSON("GetAccountDetails", data,
+                    function (json) {
+                        if (json.length) {
+                            $('#StudentAccount_ClearBalance').val(formatNumbers(json[0].ClearBalance));
+                            $('#StudentAccount_AccountName').val(json[0].AccountName);
+                            $('#StudentAccount_ProductCode').val(json[0].ProductCode);
+                            $('#StudentAccount_ProductName').val(json[0].ProductName);
+                            $('#StudentAccount_UnSupervisedCredit').val(formatNumbers(json[0].UnSupervisedCredit));
+                            $('#StudentAccount_UnSupervisedDebit').val(formatNumbers(json[0].UnSupervisedDebit));
+
+                            loadBillDetails();
+                        }                    
+                    });
+            }
+            return null;
+        });
+
+        //Gets entered bank accounts details and brings search modal with F2 press
+        $('#BankGlAccount').on('input keydown', function (event) {
+
+            var keycode = event.keyCode || event.which;
+            if (keycode === 113) { //F2 key press
+                return helpGeneralSearch("G");
+            } else {
+                var data = {
+                    accountId: $(this).val(),
+                    accountType: 'G'
+                };
+
+                $.getJSON("GetAccountDetails", data,
+                    function (json) {
+                        if (json.length) {
+                            $('#BankGlAccountName').val(json[0].AccountName);
+
+                            loadBillDetails();
+                        }
+                    });
+            }
+            return null;
+        });
+        
+    });
+
+    //sets accounting formats on numbers
+    function formatNumbers(amount) {
+
+        return accounting.formatMoney(amount, {
+            symbol: "",
+            precision: 2,
+            thousand: ",",
+            format: {
+                pos: "%s %v",
+                neg: "%s (%v)",
+                //zero: "%s  --"
+                zero: "0"
+            }
+        });
+    }
+
+    //remmoves accounting formats
+    function removeNumberFormats(amount) {
+        //input.value = accounting.unformat(input.value);
+        return accounting.unformat(amount);
+    }
+
+</script>
+<div class="row">
+    <div class="col-md-12">
+        <h3>Fees Bank Payments</h3>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-10">
+        <div class="panel panel-default" id="transactionDetails-panel">
+            <div row>
+                <p id="validationMessage" style="color: red"></p>
+            </div>
+            <div class="row">
+                <div class="col-md-2">
+                    @Html.Label("Student A/C:", new { @class = "control-label" })
+                </div>
+                <div class="col-md-3">
+                    @Html.TextBoxFor(model => model.StudentAccount.AccountID, new { @class = "form-control" })
+                </div>
+                <div class="col-md-2">
+                    @Html.Label("Balance:", new { @class = "control-label" })
+                </div>
+                <div class="col-md-3">
+                    @Html.TextBoxFor(model => model.StudentAccount.ClearBalance, new { @class = "form-control moneyInput", disabled = true })
+                </div>
+            </div>
+            <br />
+            <div class="row">
+                <div class="col-md-2">
+                    @Html.Label("Student Name:", new { @class = "control-label" })
+                </div>
+                <div class="col-md-8">
+                    @Html.TextBoxFor(model => model.StudentAccount.AccountName, new { @class = "form-control", disabled = true })
+                </div>
+            </div>
+            <br />
+            <div class="row">
+                <div class="col-md-2">
+                    @Html.Label("Product:", new { @class = "control-label" })
+                </div>
+                <div class="col-md-2">
+                    @Html.TextBoxFor(model => model.StudentAccount.ProductCode, new { @class = "form-control", disabled = true })
+                </div>
+                <div class="col-md-6">
+                    @Html.TextBoxFor(model => model.StudentAccount.ProductName, new { @class = "form-control", disabled = true })
+                </div>
+            </div>
+            <br />
+            <div class="row">
+                <div class="col-md-2">
+                    @Html.Label("UnSupervised Credit:", new { @class = "control-label" })
+                </div>
+                <div class="col-md-3">
+                    @Html.TextBoxFor(model => model.StudentAccount.UnSupervisedCredit, new { @class = "form-control moneyInputCR", disabled = true })
+                </div>
+                <div class="col-md-2">
+                    @Html.Label("Unsupervised Debit:", new { @class = "control-label" })
+                </div>
+                <div class="col-md-3">
+                    @Html.TextBoxFor(model => model.StudentAccount.UnSupervisedDebit, new { @class = "form-control moneyInputDR", disabled = true })
+                </div>
+            </div>
+            <br />
+            <div class="row">
+                <div class="col-md-2">
+                    @Html.Label("Tran Code:", new { @class = "control-label" })
+                </div>
+                <div class="col-md-3">
+                    @Html.TextBoxFor(model => model.Transactions.TranCode, new { @class = "form-control", disabled = true })
+                </div>
+                <div class="col-md-5">
+                    @Html.TextBoxFor(model => model.Transactions.TranCodeDescription, new { @class = "form-control", disabled = true })
+                </div>
+            </div>
+            <br />
+            <div class="row">
+                <div class="col-md-2">
+                    @Html.Label("Receipt No:", new { @class = "control-label" })
+                </div>
+                <div class="col-md-3">
+                    @Html.TextBoxFor(model => model.Transactions.ReceiptNo, new { @class = "form-control" })
+                </div>
+                <div class="col-md-2">
+                    @Html.Label("Payment Date:", new { @class = "control-label manadatory" })
+                </div>
+                <div class="col-md-3">
+                    @Html.TextBoxFor(model => model.Transactions.TranDate, new { @class = "form-control datePickers", disabled = true })
+                </div>
+            </div>
+            <br />
+            <div class="row">
+                <div class="col-md-2">
+                    @Html.Label("Transaction Remarks:", new { @class = "control-label manadatory" })
+                </div>
+                <div class="col-md-8">
+                    @Html.TextBoxFor(model => model.Transactions.TranRemarks, new { @class = "form-control", disabled = true })
+                </div>
+            </div>
+            <br />
+            <div class="row">
+                <div class="col-md-2">
+                    @Html.Label("Bank Slip:", new {@class = "control-label manadatory"})
+                </div>
+                <div class="col-md-3">
+                    @Html.TextBoxFor(model => model.Transactions.BankSlip, new { @class = "form-control", disabled = true })
+                </div>
+                <div class="col-md-5">
+                </div>
+            </div>
+            <br/>
+            <div class="row">
+                <div class="col-md-2">
+                    @Html.Label("Bank GL A/C:", new {@class = "control-label manadatory"})
+                </div>
+                <div class="col-md-3">
+                    @Html.TextBox("BankGlAccount", null, new { @class = "form-control"})
+                </div>
+                <div class="col-md-5">
+                    @Html.TextBox("BankGlAccountName",null,new {@class = "form-control", disabled = true})
+                </div>
+            </div>
+            <br/>
+            <div class="row">
+                <div class="col-md-5"></div>
+                <div class="col-md-2">
+                    @Html.Label("Total Amount Paid:", new { @class = "control-label manadatory" })
+                </div>
+                <div class="col-md-3">
+                    @Html.TextBoxFor(model => model.Transactions.TranAmount, new { @class = "form-control moneyInputCR", disabled = true })
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="panel panel-default" id="buttons-panel" style="height: 410px">
+            <input id="SystemDate" value="@ViewBag.SystemDate" type="hidden" />
+            <br />
+            <div class="row">
+                <button style="width: 100%" class="btn btn-success" id="btnSaveTransaction" disabled="disabled">Save</button>
+            </div>
+            <br />
+            <div class="row">
+                <button style="width: 100%" class="btn btn-danger" id="btnCancelTransaction" disabled="disabled">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="panel panel-default" id="paymentDetails-panel">
+            <table id="paymentDetailsTable" class="table table-striped table-bordered nowrap" style="table-layout: fixed;">
+                <caption>Bill Details</caption>
+                <thead>
+                    <tr>
+                        <th style="width: 100px">Bill ID</th>
+                        <th style="width: 100px">Bill Date</th>
+                        <th style="width: 100px">Fee Code</th>
+                        <th style="display: none">Term ID</th>
+                        <th style="width: 300px">Description</th>
+                        <th style="width: 150px">Outstanding Amount</th>
+                        <th style="width: 150px">Cash Deposit</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+                <tfoot></tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="searchModal" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Search</h4>
+            </div>
+            <div class="modal-body" id="searchContent">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="messageModal" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body" id="messageContent">
+                <p id="message"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    var paymentDetails, maxExpectedDeposit;
+
+    //Returns Modal with all student Account details
+    function helpGeneralSearch(flag) {
+        var url = '@Url.Content("~/")' + "Search/HelpGeneralSearch";
+        $.ajax({
+            type: "POST",
+            url: url,
+            data: '{searchFlag: "' + flag + '" }',
+            contentType: "application/json; charset=utf-8",
+            dataType: "html",
+            success: function (response) {
+                $('#searchContent').html(response);
+                $('#searchModal').modal('show');
+            },
+            failure: function () {
+                $('#searchContent').text(response.message);
+                $('#searchModal').modal('show');
+            }
+        });
+    }
+
+    //Loads bill details for selected student accounts
+    function loadBillDetails() {
+
+        clearBillPaymentsDetails();
+
+        var data = {
+            accountId: $('#StudentAccount_AccountID').val()
+        };
+
+        if (data.accountId !== "") {
+            $.getJSON("LoadBillDetails", data,
+                function (json) {
+                    if (json.length) {
+                        var tr;
+                        //Append each row to paymentdetails html table
+                        for (var i = 0; i < json.length; i++) {
+                            tr = $('<tr class=data-row />');
+                            tr.append("<td>" + json[i].BillID + "</td>");
+                            tr.append("<td>" + json[i].BillDate + "</td>");
+                            tr.append("<td>" + json[i].FeeCode + "</td>");
+                            tr.append("<td style=display:none>" + json[i].TermID + "</td>");
+                            tr.append("<td>" + json[i].Description + "</td>");
+                            tr.append("<td class=moneyInput>" + formatNumbers(json[i].OSAmount) + "</td>");
+                            tr.append("<td style=text-align:right><input type=number max=" + json[i].OSAmount + " class=amountPaidInput onchange=sumAmountPaid() value=" + formatNumbers(json[i].AmountPaid) + ">" + "</td>");
+                            //tr.append("<td class=moneyInput>" + json[i].AmountPaid + "</td>");
+                            $('#paymentDetailsTable tbody').append(tr);
+                        }
+                    }
+                }).done(function () {
+
+                if ($("#paymentDetailsTable > tbody > tr").length > 0) {
+
+
+                    sumBillPaymentAmounts();
+
+                    $('#btnSaveTransaction').removeAttr("disabled");
+                    $('#btnCancelTransaction').removeAttr("disabled");
+                    $('#Transactions_BankSlip').removeAttr("disabled");
+                    $('#Transactions_TranRemarks').removeAttr("disabled");
+                    $('#Transactions_TranDate').removeAttr("disabled");
+
+                } else {
+                    $('#btnSaveTransaction').attr("disabled", "disabled");
+                    $('#btnCancelTransaction').attr("disabled", "disabled");
+                }
+
+            });
+        }
+    }
+
+    //clears the payment details table for fresh data to be loaded
+    function clearBillPaymentsDetails() {
+        $('#paymentDetailsTable tr.data-row').empty();
+        $('#paymentDetailsTable tfoot').empty();
+        $('#Transactions_TranAmount').val(0);
+        $('#Transactions_BankSlip').val("");
+    }
+
+    //sums the outstanding amount in the payment details table
+    function sumBillPaymentAmounts() {
+        var sum1 = 0;
+        var sum2 = 0;
+        //$("#paymentDetailsTable tr").not(':first').not(':last').each(function () {
+        $("#paymentDetailsTable tr").not(':first').each(function () {
+            sum1 += getnum(removeNumberFormats($(this).find("td:eq(5)").text()));
+            sum2 += getnum(removeNumberFormats($(this).find("td:eq(6)").find("input").val()));
+            function getnum(t) {
+                if (isNumeric(t)) {
+                    return parseInt(t, 10);
+                }
+                return 0;
+                function isNumeric(n) {
+                    return !isNaN(parseFloat(n)) && isFinite(n);
+                }
+            }
+        });
+
+        //footer is appended to the payment details table
+        var tfoot = $('<tr/>');
+        tfoot.append("<td></td>");
+        tfoot.append("<td></td>");
+        tfoot.append("<td></td>");
+        tfoot.append("<td style=display:none></td>");
+        tfoot.append("<td>Grand Summaries</td>");
+        tfoot.append("<td class=moneyInputDR id=OSAmountTotal></td>");
+        tfoot.append("<td class=moneyInputCR id=AmountPaidTotal></td>");
+        $('#paymentDetailsTable tfoot').append(tfoot);
+
+        $("#OSAmountTotal").text(formatNumbers(sum1));
+        maxExpectedDeposit = sum1;
+
+        $("#AmountPaidTotal").text(formatNumbers(sum2));
+    }
+
+    function resetInputs() {
+
+        $('#StudentAccount_AccountID').val('');
+        $('#StudentAccount_ClearBalance').val(0);
+        $('#StudentAccount_ProductCode').val('');
+        $('#StudentAccount_ProductName').val('');
+        $('#StudentAccount_UnSupervisedCredit').val(0);
+        $('#StudentAccount_UnSupervisedDebit').val(0);
+        $('#Transactions_ReceiptNo').val('');
+        $('#Transactions_TranRemarks').val('');
+        $('#Transactions_BankSlip').val('');
+        $('#BankGlAccount').val('');
+        $('#BankGlAccountName').val('');
+        $('#Transactions_TranAmount').val(0);
+
+    }
+
+    //sums the inputted deposit amounts
+    function sumAmountPaid() {
+
+        var sum = 0;
+
+        $("#paymentDetailsTable tr").not(':first').each(function () {
+
+            sum += getnum($(this).find("td:eq(6)").find("input").val());
+
+            function getnum(t) {
+                if (isNumeric(t)) {
+                    return parseInt(t, 10);
+                }
+                return 0;
+                function isNumeric(n) {
+                    return !isNaN(parseFloat(n)) && isFinite(n);
+                }
+            }
+        });
+
+        $("#AmountPaidTotal").text(formatNumbers(sum));
+        $("#Transactions_TranAmount").val(formatNumbers(sum));
+
+    };
+
+    $('#btnSaveTransaction').click(function (e) {
+        e.preventDefault();
+
+        var totalDeposit = parseInt(removeNumberFormats($('#Transactions_TranAmount').val()), 10);
+
+        if (totalDeposit > 0 && totalDeposit <= maxExpectedDeposit) {
+
+            if ($('#BankGlAccount').val() !== "" && $('#BankGlAccountName').val() !== "") {
+
+                if ($('#Transactions_TranRemarks').val() !== "" && $('#Transactions_BankSlip').val() !== "") {
+
+                    var bankPaymentTrans = [];
+                    var columnId = 0;
+                    var table = $("#paymentDetailsTable tbody");
+
+
+                    //ADD CREDITS TO STUDENT ACCOUNT
+                    table.find('tr').each(function () {
+                        var $tds = $(this).find("td:eq(6)").find("input");
+
+                        var billId = $(this).find("td:eq(0)").text();
+                        var feeCode = $(this).find("td:eq(2)").text();
+                        var termId = $(this).find("td:eq(3)").text();
+                        var tranParticulars = $(this).find("td:eq(4)").text();
+                        var tranAmount = parseInt(removeNumberFormats($tds.val()), 10);
+
+                        if (tranAmount > 0) {
+
+                            columnId++;
+
+                            bankPaymentTrans.push({
+                                ColumnID: columnId,
+                                ValueDate: $('#SystemDate').val(),
+                                AccountID: $('#StudentAccount_AccountID').val(),
+                                AccountType: "F",
+                                ProductCode: $('#StudentAccount_ProductCode').val(),
+                                PartTranType: "C",
+                                ReceiptNo: $('#Transactions_ReceiptNo').val(),
+                                TranAmount: tranAmount,
+                                TranCode: $('#Transactions_TranCode').val(),
+                                TranParticulars: tranParticulars,
+                                TranRemarks: $('#Transactions_TranRemarks').val(),
+                                FeeCode: feeCode,
+                                BillID: billId,
+                                TermID: termId,
+                                BankSlip: $('#Transactions_BankSlip').val(),
+                                isRev: false,
+                                RevTranDate: null,
+                                RevTranID: null,
+                                RevTranSerialNo: null
+                            });
+                        }
+                    });
+
+                    //ADD DEBIT TO BANK GL
+                    columnId++;
+
+                    bankPaymentTrans.push({
+                        ColumnID: columnId,
+                        ValueDate: $('#SystemDate').val(),
+                        AccountID: $('#BankGlAccount').val(),
+                        AccountType: "G",
+                        ProductCode: "GL",
+                        PartTranType: "D",
+                        ReceiptNo: $('#Transactions_ReceiptNo').val(),
+                        TranAmount: totalDeposit,
+                        TranCode: $('#Transactions_TranCode').val(),
+                        TranParticulars: "TRANSFER DEPOSIT",
+                        TranRemarks: $('#Transactions_TranRemarks').val(),
+                        FeeCode: null,
+                        BillID: 0,
+                        TermID: 0,
+                        BankSlip: null,
+                        isRev: false,
+                        RevTranDate: null,
+                        RevTranID: null,
+                        RevTranSerialNo: null
+                    });
+
+                    $.ajax({
+                        type: "POST",
+                        url: '@Url.Action("AddEditTransactions", "SchuleTransactions")',
+                        data: {
+                            tranType: 'T',
+                            tranCat: 'B',
+                            trans: bankPaymentTrans,
+                            action: 'A'
+                        },
+                        dataType: "json",
+                        success: function (response) {
+                            if (response) {
+                                $('#message').text(response.message);
+                                $('#messageModal').modal('show');
+                            }
+                        }
+                    }).done(function () {
+
+                        resetInputs();
+
+                        clearBillPaymentsDetails();
+
+                        $('#btnSaveTransaction, #btnCancelTransaction').attr("disabled", "disabled");
+                    });
+                } else {
+                    $('#validationMessage').text('Please Enter Transaction Remarks and Bank Slip Number');
+
+                    if ($('#Transactions_BankSlip').val() === "") {
+                        $('#Transactions_BankSlip').focus();
+                    } else {
+                        $('#Transactions_TranRemarks').focus();
+                    }
+
+                }
+            } else {
+                $('#validationMessage').text('Please Enter a Valid Bank Account Number');
+                $('#BankGlAccount').focus();
+            }
+        } else {
+            $('#validationMessage').text('Transfer Deposit must be greater than zero, and less than or equal to total outstanding bill amount');
+        }
+
+        return false;
+
+    });
+
+
+    $('#btnCancelTransaction').click(function (e) {
+        e.preventDefault();
+
+        resetInputs();
+
+        $('#Transactions_ReceiptNo, #Transactions_TranRemarks, #Transactions_TranDate').attr("disabled", "disabled");
+
+        clearBillPaymentsDetails();
+
+        return false;
+    });
+
+</script>

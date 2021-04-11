@@ -1,0 +1,295 @@
+﻿@using SchuleManager.Models
+
+@model ClientPhotos
+
+@{
+    ViewBag.Title = "Parent Photo Upload";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<script type="text/javascript">
+
+
+    $(document).ready(function() {
+
+        $("#EntityID").on('input change keydown keyup', function(event) {
+
+                var data;
+
+                var keycode = event.keyCode || event.which;
+
+                if (keycode === 113) { //F2 key
+                    return helpGeneralSearch("P");
+                } else if (keycode === 8) { //Backspace key
+                    $('#ParentsName').val('');
+                } else {
+
+                    data = {
+                        parentId: $(this).val()
+                    };
+
+                    $.getJSON("GetParentDetails",
+                        data,
+                        function(json) {
+                            if (json.length) {
+
+                                $('#ParentsName').val(json[0].SurName + " " + json[0].OtherNames);
+                            }
+                        });
+                }
+
+                if ($('#EntityID').val() !== "" && $('#ParentsName').val() !== "") {
+                    loadParentsPhoto();
+                }
+
+                return null;
+            });
+
+        //When Account Search Modal is closed, save and cancel buttons are enabled
+        $("#searchModal").on("hidden.bs.modal",function() {
+                if ($('#EntityID').val() !== "" && $('#ParentsName').val() !== "") {
+                    loadParentsPhoto();
+                }
+            });
+
+    });
+
+</script>
+
+<div class="row">
+    @using (Html.BeginForm("PhotoUpload", "Parents", FormMethod.Post, new { enctype = "multipart/form-data", @class = "form-horizontal", role = "form" }))
+    {
+        @Html.AntiForgeryToken()
+        <div class="panel panel-primary" style="margin-top:23px;">
+            <div class="panel-heading">Parent Photo Upload</div>
+            <div class="panel-body">
+                <div class="col-md-8" style="display:inline-block">
+                    <div class="row">
+                        <div class="col-md-2">@Html.Label("Parent ID:", new {@class = "control-label manadatory"})</div>
+                        <div class="col-md-3">
+                            @Html.TextBoxFor(model => model.EntityID, new {@class = "form-control"})
+                            @Html.ValidationMessageFor(model => model.EntityID, "", new {@class = "text-danger"})
+                        </div>
+                        <div class="col-md-3">
+                            @Html.TextBox("ParentsName", null, new {@class = "form-control", disabled = true})
+                        </div>
+                    </div>
+                    <br/>
+                    <div class="row">
+                        <div class="col-md-8"> Browse&hellip;
+                            @Html.TextBoxFor(m => m.FileAttach, new {type = "file", placeholder = Html.DisplayNameFor(m => m.FileAttach), @class = "form-control ", required = "required"})
+                            <div>@Html.ValidationMessageFor(m => m.FileAttach, "", new {@class = "text-danger"})</div>
+                            <br/>
+                            <input type="submit" class="btn btn-danger" value="Upload"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <table class="table table-bordered table-striped" style="margin-bottom: 15px;">
+                        <tbody>
+                        <tr style="height: 150px">
+                            <td style="text-align: center;">
+                                <div id="divImageHolder">
+                                    <img src="data:image/jpg;base64,@ViewBag.NewPhotoData"  width="125" height="130">
+                                </div>
+                            </td>
+                        </tr>
+                        <tr><td><p id="photoInfo" style="color: red"></p></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+     }
+</div>
+
+<div class="modal fade" id="searchModal" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Search</h4>
+            </div>
+            <div class="modal-body" id="searchContent">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="messageModal" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body" id="messageContent">
+                <p id="message"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<script type="text/javascript">
+
+    function helpGeneralSearch(flag) {
+        var url = '@Url.Content("~/")' + "Search/HelpGeneralSearch";
+        $.ajax({
+            type: "POST",
+            url: url,
+            data: '{searchFlag: "' + flag + '" }',
+            contentType: "application/json; charset=utf-8",
+            dataType: "html",
+            success: function (response) {
+                $('#searchContent').html(response);
+                $('#searchModal').modal('show');
+            },
+            failure: function () {
+                $('#searchContent').text(response.message);
+                $('#searchModal').modal('show');
+            }
+        });
+    };
+
+    function loadParentsPhoto() {
+
+        $("#divImageHolder").html('');
+
+        var imgs;
+
+        var displayImage = function (base64Data) {
+            var imag = "<img width=125 height=130 "
+                + "src='" + "data:image/jpg;base64,"
+                + base64Data + "'/>";
+
+            $("#divImageHolder").html(imag);
+        };
+        
+
+        $.ajax({
+            cache: false,
+            type: "GET",
+            url: '@Url.Action("DownloadPhoto", "Parents")',
+            data: {
+                clientId: $('#EntityID').val()
+            },
+            contentType: 'application/json',
+            dataType: "json",
+            success: function (data) {
+                if (data !== null) {
+                    $('#photoInfo').text('');
+                    imgs = data;
+                    displayImage(imgs.base64image);
+                }
+            },
+            error: function () {
+                $('#photoInfo').text('Photo has not been uploaded');
+            }
+        });
+    }
+
+    $('#btnSave').click(function (e) {
+
+        e.preventDefault();
+
+        var formData = {
+            EntityID: $('#EntityID').val(),
+            FileAttach: $("#FileAttach").get(0)
+        }
+
+        $.ajax({
+            url: '@Url.Action("PhotoUpload", "Parents")',
+            type: "POST",
+            dataType: "json",
+            contentType: "application/json; charset=utf-8",
+            data: formData,
+            success: function(response) {
+                if (response) {
+                    $('#message').text(response.message);
+                    $('#messageModal').modal('show');
+                }
+            }
+        }).done(function () {
+
+            console.log('Test');
+
+            $.getJSON("DownloadPhoto", $('#EntityID').val(), function(json) {
+
+                    var imgs;
+
+                    var displayImage = function(base64Data) {
+                        var imag = "<img width=125 height=130 " +
+                            "src='" +
+                            "data:image/jpg;base64," +
+                            base64Data +
+                            "'/>";
+
+                        $("#divImageHolder").html(imag);
+                    };
+
+                    if (json !== null) {
+                        $('#photoInfo').text('');
+                        imgs = json;
+                        displayImage(imgs.base64image);
+                    }
+                });
+        });
+
+        return false;
+
+    });
+    
+
+    @*$('form').submit(function () {
+
+        var formData = {
+            EntityID: $('#EntityID').val(),
+            FileAttach: $("#FileAttach").get(0)
+        }
+
+        $.ajax({
+            url: '@Url.Action("PhotoUpload", "Parents")',
+            type: "POST",
+            dataType: "json",
+            contentType: "application/json; charset=utf-8",
+            data: formData,
+            success: function (response) {
+                if (response) {
+                    $('#message').text(response.message);
+                    $('#messageModal').modal('show');
+                }
+            }
+        });*@
+        //}).done(function () {
+
+        //    $.getJSON("DownloadPhoto", $('#EntityID').val(), function (json) {
+
+        //        var imgs;
+
+        //        var displayImage = function (base64Data) {
+        //            var imag = "<img width=125 height=130 "
+        //                + "src='" + "data:image/jpg;base64,"
+        //                + base64Data + "'/>";
+
+        //            $("#divImageHolder").html(imag);
+        //        };
+
+        //        if (json !== null) {
+        //            $('#photoInfo').text('');
+        //            imgs = json;
+        //            displayImage(imgs.base64image);
+        //        }
+        //    });
+
+        //});
+
+    //    return false;
+    //});
+</script>

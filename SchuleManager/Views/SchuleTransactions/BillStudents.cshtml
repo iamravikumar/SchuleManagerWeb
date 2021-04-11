@@ -1,0 +1,577 @@
+﻿
+@{
+    ViewBag.Title = "Bill Students";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<link href="~/Scripts/dataTablesScripts/dataTables.bootstrap.min.css" rel="stylesheet" />
+<link href="~/Content/jquery.dataTables.css" rel="stylesheet" />
+@*<link href="~/Content/gyrocode.datatable.checkboxes.css" rel="stylesheet" />*@
+<script src="~/Scripts/dataTablesScripts/jquery.dataTables.min.js"></script>
+@*<script src="~/Scripts/gyrocode.datatables.checkboxes.js"></script>*@
+<script src="~/Scripts/accounting.min.js"></script>
+
+<script type="text/javascript">
+
+    var dataTable, i;
+
+    $(document).ready(function () {
+
+        loadFeesProducts();
+
+        $("#FeesProducts").change(function () {
+
+            if (typeof dataTable != 'undefined') {
+
+                $('#studentListingTable').DataTable().ajax.reload();
+
+            } else {
+                loadStudentsToBill();
+            }
+        });
+
+        $("#ProductItems").change(function () {
+
+            if (typeof dataTable != 'undefined') {
+
+                $('#studentListingTable').DataTable().ajax.reload();
+
+            } else {
+                loadStudentsToBill();
+            }     
+            
+            loadFeesProductGL();
+
+        });
+
+        $("#AcademicTerms").change(function () {
+
+            if (typeof dataTable != 'undefined') {
+
+                $('#studentListingTable').DataTable().ajax.reload();
+
+            } else {
+                loadStudentsToBill();
+            }
+        });
+    });
+
+
+    //loads student fees product items
+    function loadFeesProducts() {
+
+        var selectedItemValue = $("#FeesProducts").val();
+        var ddlProductItems = $("#ProductItems");
+
+        $.ajax({
+            cache: false,
+            type: "GET",
+            url: '@Url.Action("GetProductItems", "SchuleTransactions")',
+            data: { "productCode": selectedItemValue },
+            success: function (data) {
+                ddlProductItems.html('');
+                ddlProductItems.append($('<option></option>').val(0).html(" - Select Fee - "));
+                $.each(data,
+                    function (id, option) {
+                        ddlProductItems.append($('<option></option>').val(option.ItemCode).html(option.Description));
+                    });
+            },
+            complete: function () {
+                loadFeesProductGL();
+            }
+        });
+    };
+
+    //loads students to be billed under fees product in an academic year into the datatable
+    function loadStudentsToBill() {
+
+        dataTable = $("#studentListingTable").DataTable({
+            "processing": true, // for show progress bar
+            "serverSide": true, // for process server side
+            "filter": true, // this is for disable filter (search box)
+            "orderMulti": true, // for disable multiple column at once
+            "ajax": {
+                "url": "/SchuleManager/SchuleTransactions/LoadStudentsToBill",
+                "data":  function(d) {
+                    d.academicId = $('#AcademicTerms').val();
+                    d.productCode = $('#FeesProducts').val();
+                    d.feeCode = $('#ProductItems').val();
+                },
+                "type": "POST",
+                "datatype": "json"
+            },
+            "columnDefs":
+            [
+                //{
+                //    'targets': [0],
+                //    'searchable': false,
+                //    'orderable': false,
+                //    'checkboxes': {
+                //        'selectRow': true
+                //    }
+                //},
+                {
+                    "targets": [0],
+                    "visible": true,
+                    "searchable": true,
+                    "orderable": true
+                },
+                {
+                    "targets": [1],
+                    "visible": true,
+                    "searchable": true,
+                    "orderable": true
+                },
+                {
+                    "targets": [2],
+                    "visible": true,
+                    "searchable": false,
+                    "orderable": true
+                },
+                {
+                    "targets": [3],
+                    "visible": true,
+                    "searchable": false,
+                    "orderable": true
+                },
+                {
+                    "targets": [4],
+                    "visible": true,
+                    "searchable": false,
+                    "orderable": true
+                },
+                {
+                    "targets": [5],
+                    "visible": true,
+                    "searchable": false,
+                    "orderable": true
+                },
+                {
+                    "targets": [6],
+                    "visible": true,
+                    "searchable": false,
+                    "orderable": true
+                },
+                {
+                    "targets": [7],
+                    "visible": true,
+                    "searchable": false,
+                    "orderable": true
+                }
+            ],
+            //'select': {
+            //    'style': 'multi'
+            //},
+            "columns": [
+                //{ "data": "AccountID", "name": "AccountID", "autoWidth": true },
+                { "data": "AccountID", "name": "AccountID", "autoWidth": true },
+                { "data": "StudentName", "name": "StudentName", "autoWidth": true },
+                { "data": "SchSectionID", "name": "SchSectionID", "autoWidth": true },
+                { "data": "FormSectionID", "name": "FormSectionID", "autoWidth": true },
+                { "data": "FormCode", "name": "FormCode", "autoWidth": true },
+                { "data": "SpecialFees", "name": "SpecialFees", "autoWidth": true },
+                { "data": "AmountToBill", "name": "AmountToBill", "autoWidth": true },
+                { "data": "Flag", "name": "Flag", "autoWidth": true }
+            ]
+        });
+
+        $('#studentListingTable tbody').on('click', 'tr', function () {
+
+            $(this).toggleClass('selected');
+
+            if (dataTable.rows('.selected').any()) {
+                $('#validationMessage').text('');
+            }
+        });
+
+
+    };
+
+    //loads fees product Gl account
+    function loadFeesProductGL() {
+        if ($('#ProductItems').val() !== "0") {
+            $.ajax({
+                cache: false,
+                type: "GET",
+                url: '@Url.Action("GetProductContraGl", "SchuleTransactions")',
+                data: {
+                    "productCode": $('#FeesProducts').val(),
+                    "feeCode": $('#ProductItems').val()
+                },
+                success: function(json) {
+                    if (json.length) {
+                        $('#GlAccountID').val(json[0].AccountID);
+                        $('#GlAccountName').val(json[0].AccountName);
+                        $('#GlAccountBalance').val(formatNumbers(json[0].ClearBalance));
+                        $('#validationMessage').text('');
+                    } else {
+                        $('#validationMessage').text('Product Contra GL has not been defined');
+                    }
+                }
+            });
+        } else {
+            $('#GlAccountID').val("");
+            $('#GlAccountName').val("");
+            $('#GlAccountBalance').val("");
+        }
+    }
+
+    //format Gl balance in accounting format
+    function formatNumbers(amount) {
+
+        return accounting.formatMoney(amount, {
+            symbol: "",
+            precision: 2,
+            thousand: ",",
+            format: {
+                pos: "%s %v",
+                neg: "%s (%v)",
+                //zero: "%s  --"
+                zero: "0"
+            }
+        });
+    }
+
+</script>
+
+<div class="row">
+    <div class="col-md-12">
+        <h3>Bill Students</h3>
+    </div>
+</div>
+<div class="row">
+    <div class="panel panel-default" id="billStudents-panel">
+        @using (Html.BeginForm(null, null, FormMethod.Post, new {id = "billStudentsForm"}))
+        {
+            <div class="row" style="padding-top: 10px">
+                <div class="form-group">
+                    <div class="col-md-2">
+                        @Html.Label("Product:", new {@class = "control-label manadatory"})
+                    </div>
+                    <div class="col-md-4">
+                        @Html.DropDownList("FeesProducts", null, new {@class = "form-control"})
+                    </div>
+                    <div class="col-md-2">
+                        @Html.Label("Fee:", new {@class = "control-label manadatory"})
+                    </div>
+                    <div class="col-md-4">
+                        @Html.DropDownList("ProductItems", null, new {@class = "form-control"})
+                    </div>
+                </div>
+            </div>
+            <br/>
+            <div class="row" style="padding-top: 10px">
+                <div class="form-group">
+                    <div class="col-md-2">
+                        @Html.Label("Academic Term:", new {@class = "control-label"})
+                    </div>
+                    <div class="col-md-4">
+                        @Html.DropDownList("AcademicTerms", null, new {@class = "form-control"})
+                    </div>
+                    <div class="col-md-6"></div>
+                </div>
+            </div>
+            <br/>
+            <div class="row" style="padding-top: 10px">
+                <div class="col-md-12">
+                    <table id="studentListingTable" class="table table-striped table-bordered nowrap" style="width: 100%">
+                        <thead>
+                        <tr>
+                            <th>Account ID</th>
+                            <th>Student Name</th>
+                            <th>School Section</th>
+                            <th>Form Section</th>
+                            <th>Form ID</th>
+                            <th>Special Fees</th>
+                            <th>Amount To Bill</th>
+                            <th>Flag</th>
+                        </tr>
+                        </thead>
+                    </table>
+                </div>
+            </div>
+            <br/>
+            <div class="row">
+                <p>***Please Note: Transactions will not be posted for Accounts with Flag="U"</p>
+            </div>
+            <br/>
+            <div class="row">
+                <div class="form-group">
+                    <div class="col-md-3">
+                        @Html.Label("GL To Credit:", new {@class = "control-label manadatory"})
+                    </div>
+                    <div class="col-md-3">
+                        @Html.TextBox("GlAccountID", null, new {@class = "form-control", @readonly = "readonly"})
+                    </div>
+                    <div class="col-md-3">
+                        @Html.TextBox("GlAccountName", null, new {@class = "form-control", @readonly = "readonly"})
+                    </div>
+                    <div class="col-md-3">
+                        @Html.TextBox("GlAccountBalance", null, new {@class = "form-control", @readonly = "readonly"})
+                    </div>
+                </div>
+            </div>
+            <br/>
+            <div row>
+                <div class="col-md-12">
+                    <p id="validationMessage" style="color: red"></p>
+                </div>        
+            </div>
+            <br/>
+            <div class="row">              
+                <div class="col-md-2">
+                    <button class="btn btn-success" id="btnBillSelectedStudents">Bill Selected Students</button>
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-success" id="btnBillAllStudents">Bill All Students</button>
+                </div>
+                <div class="col-md-8">
+                    <input id="SystemDate" value="@ViewBag.SystemDate" type="hidden"/> 
+                </div>                
+            </div>
+            <br/>
+        }
+    </div>
+</div>
+
+<div class="modal fade" id="messageModal" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body" id="messageContent">
+                <p id="message"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div> 
+        </div>
+    </div>
+</div>
+
+<div id="confirmationModal" class="modal fade" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-body">
+                Are you sure want to bill all students?
+            </div>
+            <div class="modal-footer">
+                <button type="button" data-dismiss="modal" class="btn btn-primary" id="billAllStudents">Yes</button>
+                <button type="button" data-dismiss="modal" class="btn">Cancel</button>
+            </div>  
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+
+    var billingStudentTrans = []; //an array to capture all transaction parts
+
+    //all selected students will be billed on button click
+    $('#btnBillSelectedStudents').click(function (e) {
+
+        e.preventDefault();
+
+        var numberOfSelectedRows = dataTable.rows('.selected').count();
+
+        if (numberOfSelectedRows > 0) {
+
+            var columnId = 0;
+            var creditTranAmount = 0;
+
+            var selectedFee = $('#ProductItems option:selected').text();
+            var selectedTerm = $('#AcademicTerms option:selected').text();
+            var tranRemarks = selectedFee.concat(" BILL FOR ", selectedTerm);
+
+
+            $('#studentListingTable > tbody  > tr').each(function() {
+                if ($(this).hasClass("selected")) {
+                    var pos = dataTable.row(this).index();
+                    var row = dataTable.row(pos).data();
+
+                    columnId++;
+
+                    //ADD DEBIT TRANSACTIONS
+                    billingStudentTrans.push({
+                        ColumnID: columnId,
+                        ValueDate: $('#SystemDate').val(),
+                        AccountID: row['AccountID'],
+                        AccountType: "F",
+                        ProductCode: $('#FeesProducts').val(),
+                        PartTranType: "D",
+                        ReceiptNo: "",
+                        TranAmount: row['AmountToBill'],
+                        TranCode: "005",
+                        TranParticulars: "FEES BILLING",
+                        TranRemarks: tranRemarks,
+                        BillID: 0,
+                        TermID: $('#AcademicTerms').val(),
+                        BankSlip: "",
+                        isRev: false,
+                        RevTranDate: null,
+                        RevTranID: null,
+                        RevTranSerialNo: null
+                    });
+
+                    creditTranAmount += parseInt(row['AmountToBill']);
+                }
+            });
+
+            //ADD CREDIT TRANSACTION
+            columnId++;
+
+            billingStudentTrans.push({
+                ColumnID: columnId,
+                ValueDate: $('#SystemDate').val(),
+                AccountID: $('#GlAccountID').val(),
+                AccountType: "G",
+                ProductCode: "GL",
+                PartTranType: "C",
+                ReceiptNo: "",
+                TranAmount: creditTranAmount,
+                TranCode: "003",
+                TranParticulars: "TRANSFER CREDIT",
+                TranRemarks: tranRemarks,
+                BillID: 0,
+                TermID: $('#AcademicTerms').val(),
+                BankSlip: "",
+                isRev: false,
+                RevTranDate: null,
+                RevTranID: null,
+                RevTranSerialNo: null
+            });
+
+            $.ajax({
+                type: "POST",
+                url: '@Url.Action("AddEditTransactions", "SchuleTransactions")',
+                data: {
+                    tranType: 'T',
+                    tranCat: 'S',
+                    trans: billingStudentTrans,
+                    action: 'A',
+                    feeCode: $('#ProductItems').val()
+                },
+                dataType: "json",
+                success: function(response) {
+                    if (response) {
+                        //dataTable.destroy();
+                        //loadStudentsToBill();
+                        $('#studentListingTable').DataTable().ajax.reload();
+                        $('#message').text(response.message);
+                        $('#messageModal').modal('show');
+                    }
+                }
+            });
+        } else {
+            $('#validationMessage').text('Select atleast one student');
+        }
+
+        return false;
+    });
+
+    // all students displayed in first page of dataTable will be billed on button click
+    $('#btnBillAllStudents').click(function (e) {
+        e.preventDefault();
+
+        //a pop up confirmation modal before billing all students
+        $('#confirmationModal').modal({
+                backdrop: 'static',
+                keyboard: false
+            })
+            .on('click', '#billAllStudents', function () { //if yes is clicked on confirmation modal
+                
+                var columnId = 0;
+                var creditTranAmount = 0;
+
+                var selectedFee = $('#ProductItems option:selected').text();
+                var selectedTerm = $('#AcademicTerms option:selected').text();
+                var tranRemarks = selectedFee.concat(" BILL FOR ", selectedTerm);
+
+                var transNumber = dataTable.rows().count() + 1;
+
+                $('#studentListingTable > tbody  > tr').each(function () {
+                    var pos = dataTable.row(this).index();
+                    var row = dataTable.row(pos).data();
+
+                    columnId++;
+
+                    //ADD DEBIT TRANSACTIONS
+                    billingStudentTrans.push({
+                        ColumnID: columnId,
+                        ValueDate: $('#SystemDate').val(),
+                        AccountID: row['AccountID'],
+                        AccountType: "F",
+                        ProductCode: $('#FeesProducts').val(),
+                        PartTranType: "D",
+                        ReceiptNo: "",
+                        TranAmount: row['AmountToBill'],
+                        TranCode: "005",
+                        TranParticulars: "FEES BILLING",
+                        TranRemarks: tranRemarks,
+                        FeeCode: $('#ProductItems').val(),
+                        BillID: 0,
+                        TermID: $('#AcademicTerms').val(),
+                        BankSlip: "",
+                        isRev: false,
+                        RevTranDate: null,
+                        RevTranID: null,
+                        RevTranSerialNo: null
+                    });
+
+                    creditTranAmount += parseInt(row['AmountToBill']);
+
+                });
+
+                //ADD CREDIT TRANSACTION
+                columnId++;
+
+                billingStudentTrans.push({
+                    ColumnID: columnId,
+                    ValueDate: $('#SystemDate').val(),
+                    AccountID: $('#GlAccountID').val(),
+                    AccountType: "G",
+                    ProductCode: "GL",
+                    PartTranType: "C",
+                    ReceiptNo: "",
+                    TranAmount: creditTranAmount,
+                    TranCode: "003",
+                    TranParticulars: "TRANSFER CREDIT",
+                    TranRemarks: tranRemarks,
+                    FeeCode: $('#ProductItems').val(),
+                    BillID: 0,
+                    TermID: $('#AcademicTerms').val(),
+                    BankSlip: "",
+                    isRev: false,
+                    RevTranDate: null,
+                    RevTranID: null,
+                    RevTranSerialNo: null
+                });
+
+                if (billingStudentTrans.length === transNumber) {
+                    $.ajax({
+                        type: "POST",
+                        url: '@Url.Action("AddEditTransactions", "SchuleTransactions")',
+                        data: {
+                            tranType: 'T',
+                            tranCat: 'S',
+                            trans: billingStudentTrans,
+                            action: 'A'
+                        },
+                        dataType: "json",
+                        success: function (response) {
+                            if (response) {
+                                dataTable.destroy();
+                                loadStudentsToBill();
+                                $('#message').text(response.message);
+                                $('#messageModal').modal('show');
+                            }
+                        }
+                    });
+                }
+            });
+
+        return false;
+    });
+</script>
+

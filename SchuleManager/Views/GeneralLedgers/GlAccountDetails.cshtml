@@ -1,0 +1,533 @@
+﻿@model SchuleManager.Models.GlAccounts
+@{
+    ViewBag.Title = "GL Account Details";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style type="text/css">
+
+    h4 {
+        width: 100%;
+        text-align: center;
+        border-bottom: 1px solid #000;
+        line-height: 0.1em;
+        margin: 10px 0 20px;
+    }
+
+    h4 span {
+        background: #fff;
+        padding: 0 10px;
+    }
+
+    .moneyInputDR {
+        text-align: right;
+        color: red;
+    }
+    .moneyInputCR {
+        text-align: right;
+        color: blue;
+    }
+    .moneyInput {
+        text-align: right;
+    }
+</style>
+
+<script src="~/Scripts/accounting.min.js"></script>
+
+<script type="text/javascript">
+
+    $(document).ready(function () {
+
+        //GL Account pop up search modal incase of F2 press
+        $('#AccountID').on('input keydown', function (event) {
+
+            $('#validationMessage').text('');
+
+            var keycode = event.keyCode || event.which;
+
+            if (keycode === 113) { //F2 key press
+
+                return helpGeneralSearch('G');
+
+            } else if (keycode === 8) { //Backspace key
+                $('#AccountName').val('');
+            }
+            else {
+                var data = {
+                    accountId: $(this).val()
+                };
+
+                $.getJSON("GetGlAccountDetails", data, function (json) {
+
+                    if (json.length) {
+
+                        $('#AccountName').val(json[0].AccountName);
+                        $('#GlType').val(json[0].GlType);
+                        $('#GlSubType').val(json[0].GlSubType);
+                        $('#UnSupervisedCredit').val(formatNumbers(json[0].UnSupervisedCredit));
+                        $('#UnSupervisedDebit').val(formatNumbers(json[0].UnSupervisedDebit));
+                        $('#CreditTurnOver').val(formatNumbers(json[0].CreditTurnOver));
+                        $('#DebitTurnOver').val(formatNumbers(json[0].DebitTurnOver));
+
+                        if (json[0].Balance < 0) {
+                            $('#Balance').removeClass('moneyInputCR');
+                            $('#Balance').addClass('moneyInputDR');
+                        } else {
+                            $('#Balance').removeClass('moneyInputDR');
+                            $('#Balance').addClass('moneyInputCR');
+                        }
+                        $('#Balance').val(formatNumbers(json[0].Balance));
+
+                        if (json[0].IsVerified) {
+                            $('#btnVerify').attr('disabled', 'disabled');
+                            $('#btnClose').removeAttr('disabled');
+                        } else {
+                            $('#btnVerify').removeAttr('disabled');
+                            $('#btnClose').attr('disabled', 'disabled');
+                        }
+
+                        $('#btnEdit').removeAttr('disabled', 'disabled');
+                    }
+
+                });
+            }
+
+            return null;
+        });
+
+        $('#AccountID').focus();
+
+        $('#GlType').change(function() {
+
+            var selectedItemValue = $("#GlType").val();
+            var ddlGlSubType = $("#GlSubType");
+
+            if ($('#GlType').val() !== '') {
+                $.ajax({
+                    cache: false,
+                    type: "GET",
+                    url: '@Url.Action("GetGlSubTypesByGlType", "GeneralLedgers")',
+                    data: { "gltype": selectedItemValue },
+                    success: function (data) {
+                        ddlGlSubType.html('');
+                        ddlGlSubType.removeAttr('disabled');
+                        ddlGlSubType.append($('<option></option>').val('').html(' - Select GL Sub Type - '));
+                        $.each(data,
+                            function (id, option) {
+                                ddlGlSubType.append($('<option></option>').val(option.GlSubTypeCode).html(option.GlSubType));
+                            });
+                    }
+                });
+            } else {
+                ddlGlSubType.html('');
+                ddlGlSubType.attr('disabled', 'disabled');
+            }
+        });
+
+    });
+
+    //applies accounting number formats
+    function formatNumbers(amount) {
+
+        return accounting.formatMoney(amount,
+            {
+                symbol: "",
+                precision: 2,
+                thousand: ",",
+                format: {
+                    pos: "%s %v",
+                    neg: "%s (%v)",
+                    //zero: "%s  --"
+                    zero: "0"
+                }
+            });
+    }
+
+</script>
+
+<div class="row">
+    <div class="col-md-12">
+        <h3>GL Account Details</h3>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-10">
+        <div class="panel panel-default">
+            <form class="form-horizontal">
+                <div class="panel-body">
+                    <div class="form-group row">
+                        @Html.Label("GL Account ID:", new {@class = "col-sm-2 col-form-label"})
+                        <div class="col-sm-3">
+                            @Html.TextBoxFor(model => model.AccountID, null, new {@class = "form-control"})
+                        </div>
+                        <div class="col-sm-5">
+                            @Html.TextBoxFor(model => model.AccountName, null, new {@class = "form-control", disabled = true})
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        @Html.Label("GL Type:", new {@class = "col-sm-2 col-form-label manadatory"})
+                        <div class="col-sm-3">
+                            @Html.DropDownList("GlType", null, "- Select GL Type -", new {@class = "form-control", disabled = true })
+                        </div>
+                        <div class="col-sm-5"></div>
+                    </div>
+                    <div class="form-group row">
+                        @Html.Label("GL Sub Type:", new {@class = "col-sm-2 col-form-label manadatory"})
+                        <div class="col-sm-3">
+                            @Html.DropDownList("GlSubType", null, "- Select GL Sub Type -", new {@class = "form-control", disabled = true })
+                        </div>
+                        <div class="col-sm-5"><p id="validationMessage" style="color:red"></p></div>
+                    </div>
+                    <h4><span>Behind The Scenes:</span></h4>
+                    <div class="form-group row">
+                        @Html.Label("Balance:", new {@class = "col-sm-2 col-form-label"})
+                        <div class="col-sm-3">
+                            @Html.TextBoxFor(model => Model.Balance, null, new { @class = "form-control moneyInput", disabled = true })
+                        </div>
+                        <div class="col-sm-5"></div>
+                    </div>
+                    <div class="form-group row">
+                        @Html.Label("Unsupervised CR:", new {@class = "col-sm-2 col-form-label"})
+                        <div class="col-sm-3">
+                            @Html.TextBoxFor(model => Model.UnSupervisedCredit, null, new { @class = "form-control moneyInputCR", disabled = true })
+                        </div>
+                        @Html.Label("CR Turnover:", new {@class = "col-sm-2 col-form-label"})
+                        <div class="col-sm-3">
+                            @Html.TextBoxFor(model => Model.CreditTurnOver, null, new { @class = "form-control moneyInputCR", disabled = true })
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        @Html.Label("Unsupervised DR:", new {@class = "col-sm-2 col-form-label"})
+                        <div class="col-sm-3">
+                            @Html.TextBoxFor(model => Model.UnSupervisedDebit, null, new { @class = "form-control moneyInputDR", disabled = true })
+                        </div>
+                        @Html.Label("DR Turnover:", new {@class = "col-sm-2 col-form-label" })
+                        <div class="col-sm-3">
+                            @Html.TextBoxFor(model => Model.DebitTurnOver, null, new { @class = "form-control moneyInputDR", disabled = true })
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="panel panel-default" style="height: 325px;">
+            <div class="panel-body table-responsive">
+                <table class="table table-bordered text-center">
+                    <tbody>
+                    <tr>
+                        <td>
+                            <button class="btn btn-block btn-info" disabled="disabled" id="btnVerify"  type="button">Verify</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <button class="btn btn-block btn-primary" id="btnAdd" type="button">Add</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <button class="btn btn-block btn-secondary" disabled="disabled" id="btnEdit" type="button">Edit</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <button class="btn btn-block btn-danger" disabled="disabled" id="btnClose" type="button">Close</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <button class="btn btn-block btn-success" disabled="disabled" id="btnSave" type="button">Save</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <button class="btn btn-block btn-warning" id="btnCancel" disabled="disabled" type="button">Cancel</button>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="searchModal" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Search</h4>
+            </div>
+            <div class="modal-body" id="searchContent">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modal-success" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content bg-success">
+            <div class="modal-header">
+                <h4 class="modal-title">Success Modal</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <div class="modal-body" id="success-content">
+                <p id="success-message"></p>
+            </div>
+            <div class="modal-footer justify-content-between">
+                <button type="button" class="btn btn-outline-light" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modal-failure" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content bg-danger">
+            <div class="modal-header">
+                <h4 class="modal-title">Danger Modal</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <div class="modal-body" id="failure-content">
+                <p id="failure-message"></p>
+            </div>
+            <div class="modal-footer justify-content-between">
+                <button type="button" class="btn btn-outline-light" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-outline-light">Save changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="closeAccountModal" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-body" id="closeAccountContent">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="acctClsModalTitle">Close Account: </h5>
+                </div>
+                <div class="modal-body">
+                    <label>Closure Reason:</label>
+                    <input type="text" id="CloseReason" class="form-control manadatory" />
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" id="btnOk" class="btn btn-primary">OK</button>
+                </div>
+                <div class="row">
+                    <p style="color: red" id="response"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+
+    var addOrEdit;
+
+    function helpGeneralSearch(flag) {
+        var url = '@Url.Content("~/")' + "Search/HelpGeneralSearch";
+        $.ajax({
+            type: "POST",
+            url: url,
+            data: '{searchFlag: "' + flag + '" }',
+            contentType: "application/json; charset=utf-8",
+            dataType: "html",
+            success: function (response) {
+                $('#searchContent').html(response);
+                $('#searchModal').modal('show');
+            },
+            failure: function () {
+                $('#searchContent').text(response.message);
+                $('#searchModal').modal('show');
+            }
+        });
+    }
+
+    $('#btnAdd').click(function(e) {
+
+        e.preventDefault();
+
+        $('#AccountID, #AccountName, #GlType, #GlSubType').val('');
+
+        $('#AccountName, #GlType, #GlSubType').removeAttr('disabled');
+
+        $('#AccountID').attr('disabled', 'disabled');
+
+        $('#Balance, #UnSupervisedCredit, #UnSupervisedDebit, #CreditTurnOver, #DebitTurnOver').val(0.00);
+
+        $('#btnVerify, #btnAdd, #btnEdit, #btnClose').attr('disabled', 'disabled');
+
+        $('#btnSave, #btnCancel').removeAttr('disabled');
+
+        addOrEdit = 'A';
+
+        return false;
+
+    });
+
+    $('#btnEdit').click(function (e) {
+
+        e.preventDefault();
+
+        $('#AccountName, #btnSave, #btnCancel').removeAttr('disabled');
+
+        $('#AccountID, #GlType, #GlSubType, #btnVerify, #btnAdd, #btnEdit, #btnClose').attr('disabled', 'disabled');
+
+        addOrEdit = 'E';
+
+        return false;
+
+    });
+
+    $('#btnVerify').click(function(e) {
+
+        e.preventDefault();
+
+        $.ajax({
+            type: "POST",
+            url: '@Url.Action("VerifyGlAccount", "GeneralLedgers")',
+            data: {
+                accountId: $('#AccountID').val()
+            },
+            dataType: "json",
+            success: function (response) {
+                if (response) {
+                    if (response.success) {
+                        $('#success-message').text(response.message);
+                        $('#modal-success').modal('show');
+                    } else {
+                        $('#failure-message').text(response.message);
+                        $('#modal-failure').modal('show');
+                    }
+                }
+            }
+        });
+
+        return false;
+    });
+
+    $('#btnClose').click(function (e) {
+
+        e.preventDefault();
+
+        if ($('#Balance').val() === 0 && $('#UnSupervisedCredit').val() === 0 && $('#UnSupervisedDebit').val() === 0) {
+
+            var accountDetails = $('#AccountID').val() + ": " + $('#AccountName').val();
+
+            $('#acctClsModalTitle').append(accountDetails);
+
+            $('#closeAccountModal').modal('show');
+        } else {
+            $('#validationMessage').text('Ensure the account has zero balance, and all related transactions are supervised before closing');
+        }
+
+
+        return false;
+    });
+
+    $("#btnOk").click(function (e) {
+
+        e.preventDefault();
+
+        if ($('#CloseReason').val() !== "") {
+
+            $('#closeAccountModal').modal('hide');
+
+            $.ajax({
+                type: "POST",
+                url: '@Url.Action("CloseGlAccount", "GeneralLedgers")',
+                data: {
+                    accountId: $('#AccountID').val(),
+                    closeReason: $('#CloseReason').val()
+                },
+                dataType: "json",
+                success: function (response) {
+                    if (response) {
+                        if (response.success) {
+                            $('#success-message').text(response.message);
+                            $('#modal-success').modal('show');
+                        } else {
+                            $('#failure-message').text(response.message);
+                            $('#modal-failure').modal('show');
+                        }
+                    }
+                }
+            });
+        } else {
+            $('#response').text('Please give a close reason');
+            $('#CloseReason').focus();
+        }
+
+        return false;
+
+    });
+
+    $('#btnSave').click(function(e) {
+
+        e.preventDefault();
+
+        var glAccount = {
+            AccountID: $('#AccountID').val(),
+            AccountName: $('#AccounName').val(),
+            GlType: $('#GlType').val(),
+            GlSubType: $('#GlSubType').val()
+        }
+
+        $.ajax({
+            type: "POST",
+            url: '@Url.Action("AddEditGl", "GeneralLedgers")',
+            data: {
+                account: glAccount,
+                action: addOrEdit
+            },
+            dataType: "json",
+            success: function(response) {
+                if (response) {
+                    if (response.success) {
+                        if (addOrEdit === 'A') {
+                            $('#AccountID').val(response.newAccountId);
+                        }
+                        $('#success-message').text(response.message);
+                        $('#modal-success').modal('show');
+                    } else {
+                        $('#failure-message').text(response.message);
+                        $('#modal-failure').modal('show');
+                    }
+                }
+            }
+        });
+
+        return false;
+    });
+
+    $('#btnCancel').click(function (e) {
+
+        e.preventDefault();
+
+        $('#AccountID, #AccountName, #GlType, #GlSubType').val('');
+
+        $('#AccountName, #GlType, #GlSubType').attr('disabled', 'disabled');
+
+        $('#Balance, #UnSupervisedCredit, #UnSupervisedDebit, #CreditTurnOver, #DebitTurnOver').val(0);
+
+        $('#btnVerify, #btnEdit, #btnSave, #btnCancel').attr('disabled', 'disabled');
+
+        $('#btnAdd, #AccountID').removeAttr('disabled');
+
+        $('#validationMessage').text('');
+
+        return false;
+
+    });
+
+</script>

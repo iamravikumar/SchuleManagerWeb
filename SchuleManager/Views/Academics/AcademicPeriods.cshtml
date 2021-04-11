@@ -1,0 +1,744 @@
+﻿@{
+    ViewBag.Title = "Academic Periods";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<link href="~/Scripts/dataTablesScripts/dataTables.bootstrap.min.css" rel="stylesheet" />
+@*<link href="~/Scripts/dataTablesScripts/responsive.bootstrap.min.css" rel="stylesheet" />*@
+<link href="~/Content/bootstrap-datetimepicker.css" rel="stylesheet" />
+<script src="~/Scripts/jquery.form.min.js"></script>
+<script src="~/Scripts/dataTablesScripts/jquery.dataTables.min.js"></script>
+@*<script src="~/Scripts/dataTablesScripts/dataTables.bootstrap4.min.js"></script>*@
+<script src="~/Scripts/moment.js"></script>
+<script src="~/Scripts/bootstrap-datetimepicker.min.js"></script>
+
+<style>
+    h2 {
+        width: 100%; 
+        text-align: center; 
+        border-bottom: 1px solid #000; 
+        line-height: 0.1em;
+        margin: 10px 0 20px; 
+    } 
+
+    h2 span { 
+        background:#fff; 
+        padding:0 10px; 
+    } 
+</style>
+
+
+<script type="text/javascript">
+    
+    var dataTable;
+
+    $(document).ready(function () {
+
+        $('#btnAdd, #btnSave, #btnEdit, #T1SPToDate, #T1SPFromDate, #T1HPToDate, #T1HPFromDate, #T2SPToDate, #T2SPFromDate, #T2HPToDate, #T2HPFromDate, #T3SPToDate, #T3SPFromDate, #T3HPToDate, #T3HPFromDate').attr("disabled", "disabled");
+
+        $('#Year').datetimepicker({
+            format: "YYYY",
+            viewMode: "years"
+        });
+
+        var date = new Date();
+        $('#Year').val(date.getFullYear());
+
+        $(".datePickers").datepicker({
+             dateFormat: 'dd-mm-yy'
+        });
+
+        loadAcademicPeriods();
+
+        $('#Year').on('dp.change', function (e) {
+                e.preventDefault();
+
+                if (typeof dataTable !== 'undefined' && dataTable !== null) {
+                    dataTable.ajax.reload(function() {
+                        if (dataTable.data().any()) {
+                            $('#btnEdit').removeAttr("disabled");
+                            $('#btnAdd').attr("disabled", "disabled");
+                        } else {
+                            $('#btnAdd').removeAttr("disabled");
+                            $('#btnEdit').attr("disabled", "disabled");
+                        }
+                    });
+                } else {
+                    loadAcademicPeriods();
+                }
+
+                return false;
+            });
+    });
+
+    function loadAcademicPeriods() {
+
+        dataTable = $("#academicPeriodsTable").DataTable({
+            "processing": true, // for show progress bar
+            "serverSide": true, // for process server side
+            "filter": false, // this is for disable filter (search box)
+            "orderMulti": false, // for disable multiple column at once
+            "paging": false,
+            "info": false,
+            "ajax": {
+                "url": "/SchuleManager/Academics/LoadAcademicPeriods",
+                "type": "POST",
+                "datatype": "json",
+                "data": function (d) {
+                    d.year = $('#Year').val();
+                }
+            },
+            "initComplete": function () {
+                if (dataTable.data().any()) {
+                    $('#btnEdit').removeAttr("disabled");
+                    $('#btnAdd').attr("disabled", "disabled");
+                } else {
+                    $('#btnAdd').removeAttr("disabled");
+                    $('#btnEdit').attr("disabled","disabled");
+                }
+            },
+            "columnDefs":
+            [
+                {
+                    "targets": [0],
+                    "visible": false,
+                    "searchable": false,
+                    "orderable": false
+                },
+                {
+                    "targets": [1],
+                    "visible": true,
+                    "searchable": false,
+                    "orderable": false
+                },
+                {
+                    "targets": [2],
+                    "visible": true,
+                    "searchable": false,
+                    "orderable": false
+                },
+                {
+                    "targets": [3],
+                    "visible": true,
+                    "searchable": false,
+                    "orderable": false
+                },
+                {
+                    "targets": [4],
+                    "visible": true,
+                    "searchable": false,
+                    "orderable": false
+                },
+                {
+                    "targets": [5],
+                    "visible": true,
+                    "searchable": false,
+                    "orderable": false
+                }
+            ],
+            "columns": [
+                { "data": "AcademicID", "name": "AcademicID", "autoWidth": true },
+                { "data": "TermID", "name": "TermID", "autoWidth": true },
+                { "data": "SFromDate", "name": "SFromDate", "autoWidth": true },
+                { "data": "SToDate", "name": "SToDate", "autoWidth": true },
+                { "data": "SHFromDate", "name": "SHFromDate", "autoWidth": true },
+                { "data": "SHToDate", "name": "SHToDate", "autoWidth": true }
+            ]
+
+        });
+    };
+    
+
+</script>
+
+<div class="row">
+    <div class="col-md-12">
+        <h2><span>Academic Periods</span></h2>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-12">
+        @using (Html.BeginForm(null, null, FormMethod.Post, new { id = "academicPeriods" }))
+        {
+            <div class="panel panel-default" style="padding: 10px">
+                <div class="row">
+                    <div class="col-md-2">
+                        @Html.Label("Academic Year", new { @class = "control-label" })
+                    </div>
+                    <div class="col-md-3">
+                        @Html.TextBox("Year", "", new { @class = "form-control" })
+                    </div>
+                    <div class="col-md-7"></div>
+                </div>
+                <br/>
+                <div class="row">
+                    <div class="col-md-1"></div>
+                    <div class="col-md-5 mx-auto">
+                        <h2><span>School Period</span></h2>
+                    </div>
+                    <div class="col-md-5 mx-auto">
+                        <h2><span>Holiday Period</span></h2>
+                    </div>
+                </div>
+                <br/>
+                <div class="row">
+                    <div class="col-md-1 mx-auto">
+                        @Html.Label("Terms", new { @class = "control-label" })
+                    </div>
+                    <div class="col-md-2 mx-auto">
+                        @Html.Label("From Date", new { @class = "control-label manadatory" })
+                    </div>
+                    <div class="col-md-2">
+                        @Html.Label("To Date", new { @class = "control-label manadatory" })
+                    </div>
+                    <div class="col-md-1">
+                        @Html.Label("Days", new { @class = "control-label" })
+                    </div>
+                    <div class="col-md-2">
+                        @Html.Label("From Date", new { @class = "control-label manadatory" })
+                    </div>
+                    <div class="col-md-2">
+                        @Html.Label("To Date", new { @class = "control-label manadatory" })
+                    </div>
+                    <div class="col-md-1">
+                        @Html.Label("Days", new { @class = "control-label" })
+                    </div>
+                </div>
+                <br />
+                <div class="row">
+                    <div class="col-lg-1">
+                        @Html.Label("Term 1:", new { @class = "control-label" })
+                    </div>
+                    <div class="col-lg-2">
+                        @Html.TextBox("T1SPFromDate", "", new { @class = "datePickers form-control" })
+                    </div>
+                    <div class="col-lg-2">
+                        @Html.TextBox("T1SPToDate", "", new { @class = "datePickers form-control" })
+                    </div>
+                    <div class="col-lg-1">
+                        @Html.TextBox("T1SchDays", "", new { @class = "form-control", @readonly = "readonly" })
+                    </div>
+                    <div class="col-lg-2">
+                        @Html.TextBox("T1HPFromDate", "", new { @class = "datePickers form-control" })
+                    </div>
+                    <div class="col-lg-2">
+                        @Html.TextBox("T1HPToDate", "", new { @class = "datePickers form-control" })
+                    </div>
+                    <div class="col-lg-1">
+                        @Html.TextBox("T1HDays", "", new { @class = "form-control", @readonly = "readonly" })
+                    </div>
+                </div>
+                <br />
+                <div class="row">
+                    <div class="col-lg-1">
+                        @Html.Label("Term 2:", new { @class = "control-label" })
+                    </div>
+                    <div class="col-lg-2">
+                        @Html.TextBox("T2SPFromDate", "", new { @class = "datePickers form-control" })
+                    </div>
+                    <div class="col-lg-2">
+                        @Html.TextBox("T2SPToDate", "", new { @class = "datePickers form-control" })
+                    </div>
+                    <div class="col-lg-1">
+                        @Html.TextBox("T2SchDays", "", new { @class = "form-control", @readonly = "readonly" })
+                    </div>
+                    <div class="col-lg-2">
+                        @Html.TextBox("T2HPFromDate", "", new { @class = "datePickers form-control" })
+                    </div>
+                    <div class="col-lg-2">
+                        @Html.TextBox("T2HPToDate", "", new { @class = "datePickers form-control" })
+                    </div>
+                    <div class="col-lg-1">
+                        @Html.TextBox("T2HDays", "", new { @class = "form-control", @readonly = "readonly" })
+                    </div>
+                </div>
+                <br />
+                <div class="row">
+                    <div class="col-lg-1">
+                        @Html.Label("Term 3:", new { @class = "control-label" })
+                    </div>
+                    <div class="col-lg-2">
+                        @Html.TextBox("T3SPFromDate", "", new { @class = "datePickers form-control" })
+                    </div>
+                    <div class="col-lg-2">
+                        @Html.TextBox("T3SPToDate", "", new { @class = "datePickers form-control" })
+                    </div>
+                    <div class="col-lg-1">
+                        @Html.TextBox("T3SchDays", "", new { @class = "form-control", @readonly = "readonly" })
+                    </div>
+                    <div class="col-lg-2">
+                        @Html.TextBox("T3HPFromDate", "", new { @class = "datePickers form-control" })
+                    </div>
+                    <div class="col-lg-2">
+                        @Html.TextBox("T3HPToDate", "", new { @class = "datePickers form-control" })
+                    </div>
+                    <div class="col-lg-1">
+                        @Html.TextBox("T3HDays", "", new { @class = "form-control", @readonly = "readonly" })
+                    </div>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <table id="academicPeriodsTable" class="table table-striped table-bordered nowrap" style="width: 100%">
+                        <thead>
+                        <tr>
+                            <th></th>
+                            <th>Term</th>
+                            <th>Term - From Date</th>
+                            <th>Term - To Date</th>
+                            <th>Holiday - From Date</th>
+                            <th>Holiday - To Date</th>
+                        </tr>
+                        </thead>
+                    </table>
+                </div>
+            </div>
+            <div class="panel panel-default" style="padding: 10px">
+                <div class="row">
+                    <div class="col-md-2">
+                        <button style="width:100%" type="button" class="btn btn-primary" id="btnAdd">Add</button>
+                    </div>
+                    <div class="col-md-2">
+                        <button style="width:100%" type="button" class="btn btn-secondary" id="btnEdit">Edit</button>
+                    </div>
+                    <div class="col-md-2">
+                        <button style="width:100%" type="submit" class="btn btn-success" id="btnSave">Save</button>
+                    </div>
+                    <div class="col-md-2">
+                        <button style="width:100%" type="button" class="btn btn-danger" id="btnCancel">Cancel</button>
+                    </div>
+                    <div class="col-md-4">
+                        <p id="validationMessage" style="color: red"></p>
+                    </div>
+                </div>              
+            </div>
+        }
+    </div>
+</div>
+
+
+
+
+<script type="text/javascript">
+
+    $('#btnAdd').click(function (e) {
+        e.preventDefault();
+
+        $('#T1SPToDate, #T1SPFromDate, #T1HPToDate, #T1HPFromDate, #T2SPToDate, #T2SPFromDate, #T2HPToDate, #T2HPFromDate, #T3SPToDate, #T3SPFromDate, #T3HPToDate, #T3HPFromDate').removeAttr("disabled");
+
+        $(this).attr("disabled", "disabled");
+
+        return false;
+    });
+
+    $('#btnCancel').click(function (e) {
+        e.preventDefault();
+
+        if (typeof dataTable !== 'undefined' && dataTable !== null) {
+            dataTable.ajax.reload(function() {
+                if (dataTable.data().any()) {
+                    $('#btnEdit').removeAttr("disabled");
+                    $('#btnAdd').attr("disabled", "disabled");
+                } else {
+                    $('#btnAdd').removeAttr("disabled");
+                    $('#btnEdit').attr("disabled", "disabled");
+                }
+            });
+        } else {
+            loadAcademicPeriods();
+        }
+
+        $('#T1SPToDate, #T1SPFromDate, #T1SchDays, #T1HPToDate, #T1HPFromDate, #T1HDays, #T2SPToDate, #T2SPFromDate ,#T2SchDays, #T2HPToDate, #T2HPFromDate ,#T2HDays, #T3SPToDate, #T3SPFromDate, #T3SchDays, #T3HPToDate, #T3HPFromDate, #T3HDays').val('');
+
+        $('#btnSave, #T1SPToDate, #T1SPFromDate, #T1HPToDate, #T1HPFromDate, #T2SPToDate, #T2SPFromDate, #T2HPToDate, #T2HPFromDate, #T3SPToDate, #T3SPFromDate, #T3HPToDate, #T3HPFromDate').attr("disabled", "disabled");
+
+        return false;
+    });
+
+    $('#btnEdit').click(function (e) {
+
+        e.preventDefault();
+
+        $('#Year, #btnEdit').attr("disabled", "disabled");
+
+        $('#btnSave, #T1SPToDate, #T1SPFromDate, #T1HPToDate, #T1HPFromDate, #T2SPToDate, #T2SPFromDate, #T2HPToDate, #T2HPFromDate, #T3SPToDate, #T3SPFromDate, #T3HPToDate, #T3HPFromDate').removeAttr("disabled");
+
+        //loop through academic periods datatable rows and set values into datepicker inputs
+        var data = dataTable.rows().data();
+        data.each(function (value, index) {
+            var row = dataTable.row(index).data();
+
+            if (index === 0) {
+                $('#T1SPFromDate').datepicker({
+                    dateFormat: 'dd-mm-yy'
+                }).datepicker('setDate', new Date(row['SFromDate']));
+
+                $('#T1SPToDate').datepicker({
+                    dateFormat: 'dd-mm-yy'
+                }).datepicker('setDate', new Date(row['SToDate']));
+
+                var t1Fromdate = new Date($('#T1SPFromDate').val());
+                var t1Todate = new Date($('#T1SPToDate').val());
+
+                var t1DiffTime = Math.abs(t1Todate - t1Fromdate);
+                var t1DiffDays = Math.ceil(t1DiffTime / (1000 * 60 * 60 * 24));
+                $('#T1SchDays').val(t1DiffDays);
+
+                $('#T1HPFromDate').datepicker({
+                    dateFormat: 'dd-mm-yy'
+                }).datepicker('setDate', new Date(row['SHFromDate']));
+
+                $('#T1HPToDate').datepicker({
+                    dateFormat: 'dd-mm-yy'
+                }).datepicker('setDate', new Date(row['SHToDate']));
+
+                var h1Fromdate = new Date($('#T1HPFromDate').val());
+                var h1Todate = new Date($('#T1HPToDate').val());
+
+                var h1DiffTime = Math.abs(h1Todate - h1Fromdate);
+                var h1DiffDays = Math.ceil(h1DiffTime / (1000 * 60 * 60 * 24));
+                $('#T1HDays').val(h1DiffDays);
+
+            }
+            else if (index === 1) {
+                $('#T2SPFromDate').datepicker({
+                    dateFormat: 'dd-mm-yy'
+                }).datepicker('setDate', new Date(row['SFromDate']));
+
+                $('#T2SPToDate').datepicker({
+                    dateFormat: 'dd-mm-yy'
+                }).datepicker('setDate', new Date(row['SToDate']));
+
+                var t2Fromdate = new Date($('#T2SPFromDate').val());
+                var t2Todate = new Date($('#T2SPToDate').val());
+
+                var t2DiffTime = Math.abs(t2Todate - t2Fromdate);
+                var t2DiffDays = Math.ceil(t2DiffTime / (1000 * 60 * 60 * 24));
+
+                $('#T2SchDays').val(t2DiffDays);
+
+                $('#T2HPFromDate').datepicker({
+                    dateFormat: 'dd-mm-yy'
+                }).datepicker('setDate', new Date(row['SHFromDate']));
+
+                $('#T2HPToDate').datepicker({
+                    dateFormat: 'dd-mm-yy'
+                }).datepicker('setDate', new Date(row['SHToDate']));
+
+                var h2Fromdate = new Date($('#T2HPFromDate').val());
+                var h2Todate = new Date($('#T2HPToDate').val());
+
+                var h2DiffTime = Math.abs(h2Todate - h2Fromdate);
+                var h2DiffDays = Math.ceil(h2DiffTime / (1000 * 60 * 60 * 24));
+
+                $('#T2HDays').val(h2DiffDays);
+
+            } else {
+                $('#T3SPFromDate').datepicker({
+                    dateFormat: 'dd-mm-yy'
+                }).datepicker('setDate', new Date(row['SFromDate']));
+
+                $('#T3SPToDate').datepicker({
+                    dateFormat: 'dd-mm-yy'
+                }).datepicker('setDate', new Date(row['SToDate']));
+
+                var t3Fromdate = new Date($('#T3SPFromDate').val());
+                var t3Todate = new Date($('#T3SPToDate').val());
+
+                var t3DiffTime = Math.abs(t3Todate - t3Fromdate);
+                var t3DiffDays = Math.ceil(t3DiffTime / (1000 * 60 * 60 * 24));
+
+                $('#T3SchDays').val(t3DiffDays);
+
+                $('#T3HPFromDate').datepicker({
+                    dateFormat: 'dd-mm-yy'
+                }).datepicker('setDate', new Date(row['SHFromDate']));
+
+                $('#T3HPToDate').datepicker({
+                    dateFormat: 'dd-mm-yy'
+                }).datepicker('setDate', new Date(row['SHToDate']));
+
+                var h3Fromdate = new Date($('#T3HPFromDate').val());
+                var h3Todate = new Date($('#T3HPToDate').val());
+
+                var h3DiffTime = Math.abs(h3Todate - h3Fromdate);
+                var h3DiffDays = Math.ceil(h3DiffTime / (1000 * 60 * 60 * 24));
+
+                $('#T3HDays').val(h3DiffDays);
+            }
+
+        });
+
+        return false;
+    });
+
+    $("#academicPeriods").ajaxForm({ url: '/SchuleManager/Academics/AddEditAcademicPeriods', type: 'post' });
+
+    function checkInputs() {
+        $('#academicPeriods input[type="text"]').blur(function() {
+            if (!$(this).val()) {
+                $('#btnSave').attr("disabled", "disabled");
+                $('#validationMessage').text('All dates must be given');
+            } else {
+                $('#btnSave').removeAttr("disabled");
+            }
+        });
+    }
+
+    //TERM 1
+    $('#T1SPToDate').datepicker({
+        onSelect: function () {
+            if ($('#T1SPFromDate').val() !== "") {
+
+                var fromdate = new Date($('#T1SPFromDate').val());
+                var todate = new Date($(this).val());
+
+                if (Date.parse(todate) < Date.parse(fromdate)) {
+                    $('#validationMessage').text('The End date for the school period should be greater');
+                    $(this).val('');
+                } else {
+                    var diffTime = Math.abs(todate - fromdate);
+                    var diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    $('#T1SchDays').val(diffDays);
+
+                    checkInputs();
+                }
+            }
+        }
+    });
+
+    $('#T1SPFromDate').datepicker({
+        onSelect: function () {
+            //console.log($(this).datepicker('getDate'));
+            if ($('#T1SPToDate').val() !== "") {
+
+                var fromdate = new Date($(this).val());
+                var todate = new Date($('#T1SPToDate').val());
+
+                if (Date.parse(todate) < Date.parse(fromdate)) {
+                    $('#validationMessage').text("The End date for the school period should be greater");
+                    $(this).val('');
+                } else {
+                    var diffTime = Math.abs(todate - fromdate);
+                    var diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    $('#T1SchDays').val(diffDays);
+
+                    checkInputs();
+                }
+            }
+        }
+    });
+
+    $('#T1HPToDate').datepicker({
+        onSelect: function () {
+            if ($('#T1HPFromDate').val() !== "") {
+
+                var fromdate = new Date($('#T1HPFromDate').val());
+                var todate = new Date($(this).val());
+
+                if (Date.parse(todate) < Date.parse(fromdate)) {
+                    $('#validationMessage').text("The End date for the holiday period should be later");
+                    $(this).val('');
+                } else {
+                    var diffTime = Math.abs(todate - fromdate);
+                    var diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    $('#T1HDays').val(diffDays);
+
+                    checkInputs();
+                }
+            }
+        }
+    });
+
+    $('#T1HPFromDate').datepicker({
+        onSelect: function () {
+            if ($('#T1HPToDate').val() !== "") {
+
+                var fromdate = new Date($(this).val());
+                var todate = new Date($('#T1HPToDate').val());
+
+                if (Date.parse(todate) < Date.parse(fromdate)) {
+                    $('#validationMessage').text("The End date for the holiday period should be later");
+                    $(this).val('');
+                } else {
+                    var diffTime = Math.abs(todate - fromdate);
+                    var diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    $('#T1HDays').val(diffDays);
+
+                    checkInputs();
+                }
+            }
+        }
+    });
+
+    //TERM 2
+    $('#T2SPToDate').datepicker({
+        onSelect: function () {
+            if ($('#T2SPFromDate').val() !== "") {
+
+                var fromdate = new Date($('#T2SPFromDate').val());
+                var todate = new Date($(this).val());
+
+                if (Date.parse(todate) < Date.parse(fromdate)) {
+                    $('#validationMessage').text("The End date for the school period should be greater");
+                    $(this).val('');
+                } else {
+                    var diffTime = Math.abs(todate - fromdate);
+                    var diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    $('#T2SchDays').val(diffDays);
+
+                    checkInputs();
+                }
+            }
+        }
+    });
+
+    $('#T2SPFromDate').datepicker({
+        onSelect: function () {
+            if ($('#T2SPToDate').val() !== "") {
+
+                var fromdate = new Date($(this).val());
+                var todate = new Date($('#T2SPToDate').val());
+
+                if (Date.parse(todate) < Date.parse(fromdate)) {
+                    $('#validationMessage').text("The End date for the school period should be greater");
+                    $(this).val('');
+                } else {
+                    var diffTime = Math.abs(todate - fromdate);
+                    var diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    $('#T2SchDays').val(diffDays);
+
+                    checkInputs();
+                }
+            }
+        }
+    });
+
+    $('#T2HPToDate').datepicker({
+        onSelect: function () {
+            if ($('#T2HPFromDate').val() !== "") {
+
+                var fromdate = new Date($('#T2HPFromDate').val());
+                var todate = new Date($(this).val());
+
+                if (Date.parse(todate) < Date.parse(fromdate)) {
+                    $('#validationMessage').text("The End date for the holiday period should be later");
+                    $(this).val('');
+                } else {
+                    var diffTime = Math.abs(todate - fromdate);
+                    var diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    $('#T2HDays').val(diffDays);
+
+                    checkInputs();
+                }
+            }
+        }
+    });
+
+    $('#T2HPFromDate').datepicker({
+        onSelect: function () {
+            if ($('#T2HPToDate').val() !== "") {
+
+                var fromdate = new Date($(this).val());
+                var todate = new Date($('#T2HPToDate').val());
+
+                if (Date.parse(todate) < Date.parse(fromdate)) {
+                    $('#validationMessage').text("The End date for the holiday period should be later");
+                    $(this).val('');
+                } else {
+                    var diffTime = Math.abs(todate - fromdate);
+                    var diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    $('#T2HDays').val(diffDays);
+
+                    checkInputs();
+                }
+            }
+        }
+    });
+
+    //TERM 3
+    $('#T3SPToDate').datepicker({
+        onSelect: function () {
+            if ($('#T3SPFromDate').val() !== "") {
+
+                var fromdate = new Date($('#T3SPFromDate').val());
+                var todate = new Date($(this).val());
+
+                if (Date.parse(todate) < Date.parse(fromdate)) {
+                    $('#validationMessage').text("The End date for the school period should be greater");
+                    $(this).val('');
+                } else {
+                    var diffTime = Math.abs(todate - fromdate);
+                    var diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    $('#T3SchDays').val(diffDays);
+
+                    checkInputs();
+                }
+            }
+        }
+    });
+
+    $('#T3SPFromDate').datepicker({
+        onSelect: function () {
+            if ($('#T3SPToDate').val() !== "") {
+
+                var fromdate = new Date($(this).val());
+                var todate = new Date($('#T3SPToDate').val());
+
+                if (Date.parse(todate) < Date.parse(fromdate)) {
+                    $('#validationMessage').text("The End date for the school period should be greater");
+                    $(this).val('');
+                } else {
+                    var diffTime = Math.abs(todate - fromdate);
+                    var diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    $('#T3SchDays').val(diffDays);
+
+                    checkInputs();
+                }
+            }
+        }
+    });
+
+    $('#T3HPToDate').datepicker({
+        onSelect: function () {
+            if ($('#T3HPFromDate').val() !== "") {
+
+                var fromdate = new Date($('#T3HPFromDate').val());
+                var todate = new Date($(this).val());
+
+                if (Date.parse(todate) < Date.parse(fromdate)) {
+                    $('#validationMessage').text("The End date for the holiday period should be later");
+                    $(this).val('');
+                } else {
+                    var diffTime = Math.abs(todate - fromdate);
+                    var diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    $('#T3HDays').val(diffDays);
+
+                    checkInputs();
+                }
+            }
+        }
+    });
+
+    $('#T3HPFromDate').datepicker({
+        onSelect: function () {
+            if ($('#T3HPToDate').val() !== "") {
+
+                var fromdate = new Date($(this).val());
+                var todate = new Date($('#T3HPToDate').val());
+
+                if (Date.parse(todate) < Date.parse(fromdate)) {
+                    $('#validationMessage').text("The End date for the holiday period should be later");
+                    $(this).val('');
+                } else {
+                    var diffTime = Math.abs(todate - fromdate);
+                    var diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    $('#T3HDays').val(diffDays);
+
+                    checkInputs();
+                }
+            }
+        }
+    });
+
+</script>

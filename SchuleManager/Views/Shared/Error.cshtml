@@ -1,0 +1,56 @@
+﻿@model HandleErrorInfo
+@{
+    ViewBag.Title = "Error";
+    Layout = null;
+}
+
+<meta http-equiv="Cache-Control" content="no-cache"/>
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="-1" />
+
+
+
+
+<style>
+    .center {
+        text-align: center;
+        margin-left: auto;
+        margin-right: auto;
+        margin-bottom: auto;
+        margin-top: auto;
+    }
+</style>
+<link href="~/Content/bootstrap.min.css" rel="stylesheet" />
+<div class="container">
+    <div class="row">
+        <div>
+            <div class="center">
+                <h1>
+                    Something went wrong
+                    <small style="color: red;font-family: Tahoma">
+                        Error
+                    </small>
+                </h1>
+
+                @if (TempData["ErrorMessage"] != null)
+                {
+                    <div class="alert alert-danger">
+                        <strong>Oops!</strong> @TempData["ErrorMessage"]
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-danger">
+                        <strong>Oops!</strong> An error occurred while processing your request.
+                    </div>
+                }
+                <br />
+                <p>The page you requested could not be found, either contact your webmaster or try again. Use your browsers <b>Back</b> button to navigate to the page you have previously came from</p>
+                <p><b>Or you could just press this neat little button:</b></p>
+                @Html.ActionLink("Take Me Home", "Login","Login", null, new {@class="btn btn-info"})
+            </div>
+            <br />
+            <p></p>
+        </div>
+    </div>
+</div>

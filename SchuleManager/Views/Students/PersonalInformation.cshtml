@@ -1,0 +1,485 @@
+﻿@using SchuleManager.Models
+@model Students
+@{
+    ViewBag.Title = "Student Personal Information";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<style type="text/css">
+    h4 {
+        width: 100%;
+        text-align: center;
+        border-bottom: 1px solid #000;
+        line-height: 0.1em;
+        margin: 10px 0 20px;
+    }
+
+        h4 span {
+            background: #fff;
+            padding: 0 10px;
+        }
+</style>
+
+<script type="text/javascript">
+    
+    $(document).ready(function () {
+
+        $(".datePickers").datepicker({
+            dateFormat: 'dd-mm-yy'
+        });
+
+        //Gets entered student details and returns pop up search modal incase of F2 press
+        $('#StudentID').on('input keydown', function (event) {
+
+            var data;
+            var keycode = event.keyCode || event.which;
+
+            if (keycode === 113) { //F2 key press
+
+                return helpGeneralSearch("S");
+
+            } else {
+                data = {
+                    studentId: $(this).val()
+                };
+
+                $.getJSON("GetStudentDetails",
+                    data,
+                    function (json) {
+                        if (json.length) {
+
+                            $('#IndexNo').val(json[0].IndexNo);
+                            $('#UNEBNo').val(json[0].UNEBNo);
+                            $('#OtherID1').val(json[0].OtherID1);
+                            $('#OtherID2').val(json[0].OtherID2);
+                            $('#SurName').val(json[0].SurName);
+                            $('#OtherNames').val(json[0].OtherNames);
+                            $('#RAddress').val(json[0].RAddress);
+                            $('#Dateofbirth').val(json[0].Dateofbirth);
+                            $('#Gender').val(json[0].GenderID);
+                            $('#NationalityCode').val(json[0].NationalityCode);
+                            $('#RegDate').val(json[0].RegDate);
+                            $('#ClassCode').val(json[0].ClassCode);
+                            $('#HouseCode').val(json[0].HouseCode);
+                            $('#FormerSchool').val(json[0].FormerSchool);
+                            $('#SchoolSection').val(json[0].SchSectionID);
+                            $('#studentStatus').text(json[0].Status);
+                            $('#FeesBalance').val(json[0].FeesBal);
+                            $('#FormSection').val(json[0].FormSection);
+
+                            $('#btnEditTransaction, #btnCancelTransaction').removeAttr("disabled");
+                        }
+                    });
+            }
+
+            return null;
+        });
+
+        //When Account Search Modal is closed, save and cancel buttons are enabled
+        $("#searchModal").on("hidden.bs.modal", function () {
+
+            if ($('#StudentID').val() !== "" && $('#SurName').val() !== "") {
+
+                var data = {
+                    studentId: $('#StudentID').val()
+                };
+
+                $.getJSON("GetStudentDetails",
+                    data,
+                    function (json) {
+                        if (json.length) {
+
+                            $('#IndexNo').val(json[0].IndexNo);
+                            $('#UNEBNo').val(json[0].UNEBNo);
+                            $('#OtherID1').val(json[0].OtherID1);
+                            $('#OtherID2').val(json[0].OtherID2);
+                            $('#SurName').val(json[0].SurName);
+                            $('#OtherNames').val(json[0].OtherNames);
+                            $('#RAddress').val(json[0].RAddress);
+                            $('#Dateofbirth').val(json[0].Dateofbirth);
+                            $('#Gender').val(json[0].GenderID);
+                            $('#NationalityCode').val(json[0].NationalityCode);
+                            $('#RegDate').val(json[0].RegDate);
+                            $('#ClassCode').val(json[0].ClassCode);
+                            $('#HouseCode').val(json[0].HouseCode);
+                            $('#FormerSchool').val(json[0].FormerSchool);
+                            $('#SchoolSection').val(json[0].SchSectionID);
+                            $('#studentStatus').text(json[0].Status);
+                            $('#FeesBalance').val(json[0].FeesBal);
+                            $('#FormSection').val(json[0].FormSection);
+
+                            $('#btnEditTransaction, #btnCancelTransaction').removeAttr("disabled");
+                        }
+                    });
+            }
+        });
+
+    });
+
+</script>
+<div class="row">
+    <div class="col-md-12">
+        <h2>Students' Personal Information</h2>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-10">
+        <div class="panel panel-default" id="bioData-panel" style="padding: 10px">
+            <div class="row">
+                <div class="col-md-2">
+                    @Html.Label("Student ID:", new { @class = "control-label manadatory" })
+                </div>
+                <div class="col-md-3">
+                    @Html.TextBoxFor(model => model.StudentID, new { @class = "form-control", required = "required" })
+                </div>
+                <div class="col-md-3">
+                    <p id="studentStatus" style="color:red"></p>
+                </div>
+                <div class="col-md-2"></div>
+            </div>
+            <br />
+            <div class="row">
+                <div class="col-md-2">
+                    @Html.Label("School Index No:", new { @class = "control-label" })
+                </div>
+                <div class="col-md-3">
+                    @Html.TextBoxFor(model => model.IndexNo, new { @class = "form-control", disabled = true })
+                </div>
+                <div class="col-md-2">
+                    @Html.Label("UNEB No:", new { @class = "control-label" })
+                </div>
+                <div class="col-md-3">
+                    @Html.TextBoxFor(model => model.UNEBNo, new { @class = "form-control", disabled = true })
+                </div>
+            </div>
+            <br />
+            <div class="row">
+                <div class="col-md-2">
+                    @Html.Label("Other ID 1:", new { @class = "control-label" })
+                </div>
+                <div class="col-md-3">
+                    @Html.TextBoxFor(model => model.OtherID1, new { @class = "form-control", disabled = true })
+                </div>
+                <div class="col-md-2">
+                    @Html.Label("Other ID 2:", new { @class = "control-label" })
+                </div>
+                <div class="col-md-3">
+                    @Html.TextBoxFor(model => model.OtherID2, new { @class = "form-control", disabled = true })
+                </div>
+            </div>
+            <br />
+            <div class="row">
+                <div class="col-md-2">
+                    @Html.Label("Surname:", new { @class = "control-label manadatory" })
+                </div>
+                <div class="col-md-8">
+                    @Html.TextBoxFor(model => model.SurName, new { @class = "form-control", required = "required", disabled = true })
+                </div>
+            </div>
+            <br />
+            <div class="row">
+                <div class="col-md-2">
+                    @Html.Label("Other Names:", new { @class = "control-label manadatory" })
+                </div>
+                <div class="col-md-8">
+                    @Html.TextBoxFor(model => model.OtherNames, new { @class = "form-control", required = "required", disabled = true })
+                </div>
+            </div>
+            <br/>
+            <div class="row">
+                <div class="col-md-2">
+                    @Html.Label("Residential Address:", new { @class = "control-label manadatory" })
+                </div>
+                <div class="col-md-8">
+                    @Html.TextAreaFor(model => model.RAddress, new { @class = "form-control", required = "required", disabled = true })
+                </div>
+            </div>
+            <br/>
+            <div class="row">
+                <div class="col-md-2">
+                    @Html.Label("Nationality:", new { @class = "control-label manadatory" })
+                </div>
+                <div class="col-md-3">
+                    @Html.DropDownListFor(model => model.NationalityCode, new SelectList((List<Nationalities>)ViewData["Nationality"], "NationalityCode", "Nationality"), "Select", new { @class = "form-control", required = "required", disabled = true })
+                </div>
+                <div class="col-md-2">
+                    @Html.Label("Gender:", new { @class = "control-label manadatory" })
+                </div>
+                <div class="col-md-3">
+                    @Html.DropDownList("Gender", new List<SelectListItem> { new SelectListItem { Text = @"MALE", Value = "M" }, new SelectListItem { Text = @"FEMALE", Value = "F" } }, new { @class = "form-control", required = "required", disabled = true })
+                </div>
+            </div>
+            <br/>
+            <div class="row">
+                <div class="col-md-2">
+                    @Html.Label("Date Of Birth:", new { @class = "control-label manadatory" })
+                </div>
+                <div class="col-md-3">
+                    @Html.TextBoxFor(model => model.Dateofbirth, new { @class = "form-control datePickers", required = "required", disabled = true })
+                </div>
+                <div class="col-md-1">
+                    @Html.TextBox("Age", null, new { @class = "form-control", disabled = true })
+                </div>
+                <div class="col-md-2">
+                    @Html.Label("Class:", new { @class = "control-label manadatory" })
+                </div>
+                <div class="col-md-2">
+                    @Html.DropDownListFor(model => model.ClassCode, new SelectList((List<Classes>)ViewData["Classes"], "ClassCode", "Class"), " - Select - ", new { @class = "form-control", required = "required", disabled = true })
+                </div>
+            </div>
+            <br/>
+            <div class="row">
+                <div class="col-md-2">
+                    @Html.Label("Registration Date:", new { @class = "control-label manadatory" })
+                </div>
+                <div class="col-md-3">
+                    @Html.TextBoxFor(model => model.RegDate, new { @class = "form-control datePickers", required = "required", disabled = true })
+                </div>
+                <div class="col-md-2">
+                    @Html.Label("House:", new { @class = "control-label manadatory" })
+                </div>
+                <div class="col-md-3">
+                    @Html.DropDownListFor(model => model.HouseCode, new SelectList((List<Houses>)ViewData["Houses"], "HouseCode", "House"), " - Select - ", new { @class = "form-control", required = "required", disabled = true })
+                </div>
+            </div>
+            <br/>
+            <div class="row">
+                <div class="col-md-2">
+                    @Html.Label("Former School:", new { @class = "control-label" })
+                </div>
+                <div class="col-md-8">
+                    @Html.TextBoxFor(model => model.FormerSchool, new { @class = "form-control", disabled = true })
+                </div>
+            </div>
+            <br/>
+            <div class="row">
+                <div class="col-md-2">
+                    @Html.Label("School Section:", new { @class = "control-label manadatory" })
+                </div>
+                <div class="col-md-3">
+                    @Html.DropDownList("SchoolSection", new List<SelectListItem> { new SelectListItem { Text = @"DAY", Value = "D" }, new SelectListItem { Text = @"BOARDING", Value = "B" } }, new { @class = "form-control", required = "required", disabled = true })
+                </div>
+                <div class="col-md-2">
+                    @Html.Label("Religion:", new { @class = "control-label manadatory" })
+                </div>
+                <div class="col-md-3">
+                    @Html.DropDownListFor(model => model.ReligionCode, new SelectList((List<Religions>)ViewData["Religions"], "ReligionCode", "Religion"), " - Select - ", new { @class = "form-control", required = "required", disabled = true })
+                </div>
+            </div>
+        </div>
+        <h4><span>More Information</span></h4>
+        <div class="panel panel-default" id="moreInfo-panel" style="padding: 10px">
+            <div class="row">
+                <div class="col-md-2">
+                    @Html.Label("Fee Balance:", new { @class = "control-label" })
+                </div>
+                <div class="col-md-3">
+                    @Html.TextBox("FeesBalance", null, new { @class = "form-control", disabled = true })
+                </div>
+                <div class="col-md-2">
+                    @Html.Label("Form Section:", new { @class = "control-label" })
+                </div>
+                <div class="col-md-3">
+                    @Html.TextBox("FormSection", null, new { @class = "form-control", disabled = true })
+                </div>
+            </div>
+            <br />
+            <div class="row">
+                <div class="col-md-2">
+                    @Html.Label("Savings Balance:", new { @class = "control-label" })
+                </div>
+                <div class="col-md-3">
+                    @Html.TextBox("SavingsBalance", null, new { @class = "form-control", disabled = true })
+                </div>
+                <div class="col-md-5">                 
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2" style="height: 715px">
+        <div class="panel panel-default" id="buttons-panel" style="padding: 10px; height: 100%">
+            <div class="row">
+                <button style="width: 100%" class="btn btn-primary" id="btnAddStudent">Add</button>
+            </div>
+            <br />
+            <div class="row">
+                <button style="width: 100%" class="btn btn-info" id="btnEditStudent" disabled="disabled">Edit</button>
+            </div>
+            <br />
+            <div class="row">
+                <button style="width: 100%" class="btn btn-success" id="btnSaveStudent" disabled="disabled">Save</button>
+            </div>
+            <br />
+            <div class="row">
+                <button style="width: 100%" class="btn btn-danger" id="btnCancel" disabled="disabled">Cancel</button>
+            </div>
+            <br />
+            <div class="row">
+                <p id="response" style="color: red;"></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="searchModal" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Search</h4>
+            </div>
+            <div class="modal-body" id="searchContent">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="messageModal" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body" id="messageContent">
+                <p id="message"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script type="text/javascript">
+
+    function helpGeneralSearch(flag) {
+        var url = '@Url.Content("~/")' + "Search/HelpGeneralSearch";
+        $.ajax({
+            type: "POST",
+            url: url,
+            data: '{searchFlag: "' + flag + '" }',
+            contentType: "application/json; charset=utf-8",
+            dataType: "html",
+            success: function (response) {
+                $('#searchContent').html(response);
+                $('#searchModal').modal('show');
+            }
+        });
+    };
+
+    $('#btnAddStudent').click(function (e) {
+
+        e.preventDefault();
+
+        resetInputs();
+
+        $('#StudentID, #btnAddStudent').attr('disabled', 'disabled');
+
+        $('#IndexNo, #UNEBNo, #OtherID1, #OtherID2, #SurName, #OtherNames, #RAddress, #NationalityCode, #Gender, #Dateofbirth, #HouseCode, #FormerSchool, #ReligionCode, #btnSaveStudent, #btnCancel').removeAttr('disabled');
+
+        return false;
+
+    });
+
+    $('#btnEditStudent').click(function (e) {
+
+        e.preventDefault();
+
+        $('#StudentID, #btnAddStudent').attr('disabled', 'disabled');
+
+        $('#IndexNo, #UNEBNo, #OtherID1, #OtherID2, #SurName, #OtherNames, #RAddress, #NationalityCode, #Gender, #Dateofbirth, #HouseCode, #FormerSchool, #ReligionCode, #btnSaveStudent').removeAttr('disabled');
+
+        return false;
+
+    });
+
+    $('#btnSaveStudent').click(function(e) {
+
+        e.preventDefault();
+
+        $('#response').Text('');
+
+        var nullRequiredInputs = 0;
+
+        $('#bioData-panel').find('input').each(function () {
+            if ($(this).prop('required') && $(this).val() === '') {
+                nullRequiredInputs++;
+            }
+        });     
+
+        if (nullRequiredInputs === 0) {
+
+            var option;
+
+            if ($('#StudentID').val() === '') {
+                option = 'A';
+            } else {
+                option = 'E';
+            }
+
+            var studentData = {
+                StudentID: $('#StudentID').val(),
+                IndexNo: $('#IndexNo').val(),
+                UNEBNo: $('#UNEBNo').val(),
+                OtherID1: $('#OtherID1').val(),
+                OtherID2: $('#OtherID2').val(),
+                SurName: $('#SurName').val(),
+                OtherNames: $('#OtherNames').val(),
+                Dateofbirth: $('#Dateofbirth').val(),
+                GenderID: $('#Gender').val(),
+                NationalityCode: $('#NationalityCode').val(),
+                RegDate: $('#RegDate').val(),
+                RAddress: $('#RAddress').val(),
+                ReligionCode: $('#ReligionCode').val(),
+                HouseCode: $('#HouseCode').val(),
+                FormerSchool: $('#FormerSchool').val(),
+                ClassCode: $('#ClassCode').val(),
+                SchSectionID: $('#SchoolSection').val()
+            };
+
+            $.ajax({
+                type: "POST",
+                url: '@Url.Action("AddEditStudents", "Students")',
+                data: {
+                    student: studentData,
+                    action: option
+                },
+                dataType: "json",
+                success: function(response) {
+                    if (response) {
+                        $('#message').text(response.message);
+                        $('#messageModal').modal('show');
+                    }
+                }
+            });
+        } else {
+            $('#response').Text('Please Enter all Mandatory Fields');
+        }
+        return false;
+    });
+
+    $('#btnCancel').click(function (e) {
+
+        e.preventDefault();
+
+        resetInputs();
+
+        $('#response').Text('');
+
+        $('#StudentID, #btnAddStudent').removeAttr('disabled');
+
+        $('#btnSaveStudent, #btnEditStudent').attr('disabled', 'disabled');
+
+        return false;
+
+    });
+
+    function resetInputs() {
+        
+        $('#StudentID, #IndexNo, #UNEBNo, #OtherID1, #OtherID2, #SurName, #OtherNames, #RAddress, #NationalityCode, #Dateofbirth, #HouseCode, #FormerSchool, #ReligionCode, #FeesBalance, #FormSection, #SavingsBalance').val('');
+    }
+
+</script>

@@ -1,0 +1,130 @@
+﻿@using SchuleManager.Models
+@model IEnumerable<DataEntryRightsModel>
+
+<style type="text/css">
+    h4 {
+        width: 100%;
+        text-align: center;
+        border-bottom: 1px solid #000;
+        line-height: 0.1em;
+        margin: 10px 0 20px;
+    }
+
+    h4 span {
+        background: #fff;
+        padding: 0 10px;
+    }
+</style>
+
+@if (Model.Any())
+{
+    foreach (var rights in Model)
+    {
+        <h4><span>Data Entry Rights</span></h4>
+        <div class="row panel panel-default" style="padding: 10px">
+            @if (rights.AskAdd)
+            {
+                <div class="form-group row">
+                    <div class="col-sm-5">
+                        <div class="custom-control custom-checkbox" style="width: 250px">
+                            <input type="checkbox" id="CanAdd" class="custom-control-input" value="@rights.MenuId"/>
+                            <label class="custom-control-label">Ask Add</label>
+                        </div>
+                    </div>
+                </div>
+                            
+                if (rights.CanAdd)
+                {
+                <script type="text/javascript">
+
+                    $('#CanAdd').prop('checked', true);
+
+                </script>
+                }
+            }
+            @if (rights.AskEdit)
+            {
+                <div class="form-group row">                      
+                    <div class="col-sm-5">
+                        <div class="custom-control custom-checkbox" style="width:250px">
+                            <input type="checkbox" id="CanEdit" class="custom-control-input" value="@rights.MenuId"/>
+                            <label class="custom-control-label">Ask Edit</label>
+                        </div>
+                    </div>
+                </div>  
+            
+                if (rights.CanEdit)
+                {
+                    <script type="text/javascript">
+
+                        $('#CanEdit').prop('checked', true);
+
+                    </script>
+                }
+            }
+            @if (rights.AskDelete)
+            {
+                <div class="form-group row">                      
+                    <div class="col-sm-5">
+                        <div class="custom-control custom-checkbox" style="width:250px">
+                            <input type="checkbox" id="CanDelete" class="custom-control-input" value="@rights.MenuId"/>
+                            <label class="custom-control-label">Ask Delete</label>
+                        </div>
+                    </div>
+                </div>
+                
+                if (rights.CanDelete)
+                {
+                    <script type="text/javascript">
+
+                        $('#CanDelete').prop('checked', true);
+
+                    </script>
+                } 
+            }
+
+
+            @if (rights.AskPostingLimit)
+            {
+                <div class="form-group row">
+                    @Html.Label("Posting Limit:", new { @class = "col-sm-2 col-form-label manadatory" })
+                    <div class="col-sm-3">
+                        <input type="text" id="PostingLimit" class="form-control" value="@rights.PostingLimit"/>
+                    </div>
+                </div>   
+            }
+        </div>
+        if (rights.AskSupervision)
+        {
+            <h4><span>Supervision Rights</span></h4>
+            <div class="row panel panel-default" style="padding: 10px">
+                <div class="form-group row">
+                    <div class="col-sm-5">
+                        <div class="custom-control custom-checkbox" style="width: 250px">
+                            <input type="checkbox" id="CanSupervise" class="custom-control-input" value="@rights.MenuId"/>
+                            <label class="custom-control-label">Can Supervise:</label>
+                        </div>
+                    </div>
+                </div>
+
+                @if (rights.CanSupervise)
+                {
+                <script type="text/javascript">
+
+                    $('#CanSupervise').prop('checked', true);
+
+                </script>
+                }
+                @if (rights.AskSupervisionLimit)
+                {
+                <div class="form-group row">
+                    @Html.Label("Supervision Limit:", new { @class = "col-sm-2 col-form-label manadatory" })
+                    <div class="col-sm-3">
+                        <input type="text" id="SupervisionLimit" class="form-control" value="@rights.SupervisionLimit"/>
+                    </div>
+                </div>   
+                }
+            </div>              
+        }
+    }
+}

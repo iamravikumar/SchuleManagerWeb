@@ -1,0 +1,53 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1 maximum-scale=1">
+    <meta http-equiv="Cache-Control" content="no-cache">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="-1" />
+
+    <script type="text/javascript">
+
+        function disableBackButton() {
+            window.history.forward();
+        }
+        setTimeout("disableBackButton()", 0);
+
+        window.onunload = function () {
+            return null;
+        };
+
+    </script>
+
+    <title>@ViewBag.Title - TricoFin</title>
+    <link href="~/Content/bootstrap.min.css" rel="stylesheet" />
+    <link href="~/Content/Login.css" rel="stylesheet" />
+    @Scripts.Render("~/bundles/modernizr")
+    <link href="~/Content/roboto.css" rel="stylesheet" />
+    <style type="text/css">
+        * {
+            font-size: 13px !important;
+            font-weight: inherit;
+            font-family: 'Roboto', sans-serif;
+        }
+    </style>
+
+</head>
+<body>
+    
+<div class="container body-content">
+    <script src="~/Scripts/jquery-1.12.4.min.js"></script>
+    <script src="~/Scripts/jquery.validate.min.js"></script>
+    <script src="~/Scripts/jquery.validate.unobtrusive.min.js"></script>
+
+    @RenderBody()
+    <hr/>
+    <footer>
+        <p></p>
+    </footer>
+</div>
+
+</body>
+</html>
+

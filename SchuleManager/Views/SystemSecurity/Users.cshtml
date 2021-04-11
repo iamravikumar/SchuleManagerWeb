@@ -1,0 +1,632 @@
+﻿@model SchuleManager.Models.SystemUsers
+@{
+    ViewBag.Title = "Users";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<style type="text/css">
+    h4 {
+        width: 100%;
+        text-align: left;
+        border-bottom: 1px solid #000;
+        line-height: 0.1em;
+        margin: 10px 0 20px;
+        color: red
+    }
+
+    h4 span {
+        background: #fff;
+        padding: 0 10px;
+    }
+
+    h5 {
+        width: 100%;
+        text-align: center;
+        border-bottom: 1px solid #000;
+        line-height: 0.1em;
+        margin: 10px 0 20px;
+        color: blue
+    }
+
+    h5 span {
+        background: #fff;
+        padding: 0 10px;
+    }
+</style>
+
+<script type="text/javascript">
+
+    var userCreator;
+
+    $(document).ready(function () {
+
+        $('#UserName').focus();
+
+        //Gets user details or returns pop up search modal incase of F2 press
+        $('#UserName').on('input keydown', function (event) {
+
+            var keycode = event.keyCode || event.which;
+
+            if (keycode === 113) { //F2 key press
+
+                return helpGeneralSearch('U');
+
+            } else if (keycode === 8) { //Backspace key
+                $('#RoleCode, #Description, #SurName, #OtherNames, #UserPassword, #ConfirmPassword, #PhoneNo1, #EmailId, #CashierGl, #CashierGLName').val('');
+                $('#IsCashier, #PasswordNeverExpires, #MustChangePassword, #IsDisabled').prop('checked', false);
+
+                $('#btnEdit').attr('disabled', 'disabled');
+                $('#btnAdd').removeAttr('disabled');
+            }
+            else {
+                var data = {
+                    username: $(this).val()
+                };
+
+                $.getJSON("GetUserDetails", data, function (json) {
+                    if (json.length) {
+                        $('#RoleCode').val(json[0].RoleCode);
+                        $('#Description').val(json[0].Description);
+                        $('#UserPassword').val(json[0].UserPassword);
+                        $('#ConfirmPassword').val(json[0].UserPassword);
+                        $('#SurName').val(json[0].SurName);
+                        $('#OtherNames').val(json[0].OtherNames);
+                        $('#PhoneNo1').val(json[0].PhoneNo1);
+                        $('#EmailId').val(json[0].EmailId);
+                        $('#IsCashier').prop('checked', json[0].IsCashier);
+                        $('#CashierGl').val(json[0].CashierGl);
+                        $('#CashierGLName').val(json[0].CashierGLName);
+                        $('#PasswordNeverExpires').prop('checked', json[0].PasswordNeverExpires);
+                        $('#MustChangePassword').prop('checked', json[0].MustChangePassword);
+                        $('#IsDisabled').prop('checked', json[0].IsDisabled);
+
+                        $('#btnEdit').removeAttr('disabled');
+                        $('#btnAdd').attr('disabled', 'disabled');
+
+                        if (!json[0].IsVerified) {
+                            $('#btnSupervise').removeAttr('disabled');
+                            userCreator = json[0].CreatedBy;
+                        } else {
+                            $('#btnSupervise').attr('disabled', 'disabled');
+                        }
+                    }
+
+                    if ($('#UserPassword').val() === '' && $('#SurName').val() === '') {
+                        $('#btnEdit').attr('disabled', 'disabled');
+                        $('#btnAdd').removeAttr('disabled');
+                    }
+                });
+            }
+
+            return null;
+        });
+
+        //When User Search Modal is closed
+        $("#userSearchModal").on("hidden.bs.modal", function () {
+
+            if ($('#UserName').val() !== "" && $('#SurName').val() !== "") {
+
+                var data = {
+                    username: $('#UserName').val()
+                };
+
+                $.getJSON("GetUserDetails", data, function (json) {
+                    if (json.length) {
+                        $('#RoleCode').val(json[0].RoleCode);
+                        $('#Description').val(json[0].Description);
+                        $('#UserPassword').val(json[0].UserPassword);
+                        $('#ConfirmPassword').val(json[0].UserPassword);
+                        $('#SurName').val(json[0].SurName);
+                        $('#OtherNames').val(json[0].OtherNames);
+                        $('#PhoneNo1').val(json[0].PhoneNo1);
+                        $('#EmailId').val(json[0].EmailId);
+                        $('#IsCashier').prop('checked', json[0].IsCashier);
+                        $('#CashierGl').val(json[0].CashierGl);
+                        $('#CashierGLName').val(json[0].CashierGLName);
+                        $('#PasswordNeverExpires').prop('checked', json[0].PasswordNeverExpires);
+                        $('#MustChangePassword').prop('checked', json[0].MustChangePassword);
+                        $('#IsDisabled').prop('checked', json[0].IsDisabled);
+
+                        $('#btnEdit').removeAttr('disabled');
+                        $('#btnAdd').attr('disabled', 'disabled');
+
+                        if (!json[0].IsVerified) {
+                            $('#btnSupervise').removeAttr('disabled');
+                            userCreator = json[0].CreatedBy;
+                        } else {
+                            $('#btnSupervise').attr('disabled', 'disabled');
+                        }
+                    }
+
+                    if ($('#UserPassword').val() === '' && $('#SurName').val() === '') {
+                        $('#btnEdit').attr('disabled', 'disabled');
+                        $('#btnAdd').removeAttr('disabled');
+                    }
+
+                });
+            }
+        });
+
+        //Gets role details or returns pop up search modal incase of F2 press
+        $('#RoleCode').on('input keydown', function (event) {
+
+            var keycode = event.keyCode || event.which;
+
+            if (keycode === 113) { //F2 key press
+
+                return helpGeneralSearch('R');
+
+            } else if (keycode === 8) { //Backspace key
+                $('#Description').val('');
+            }
+            else {
+                var data = {
+                    roleCode: $(this).val()
+                };
+
+                $.getJSON("GetRoleDetails", data, function (json) {
+                    if (json.length) {
+                        $('#Description').val(json[0].Description);
+                    }
+                });
+            }
+
+            return null;
+        });
+
+        //Gets cash gl details or returns pop up search modal incase of F2 press
+        $('#CashierGl').on('input keydown', function (event) {
+
+            var keycode = event.keyCode || event.which;
+
+            if (keycode === 113) { //F2 key press
+
+                return helpGeneralSearch('C');
+
+            } else if (keycode === 8) { //Backspace key
+                $('#CashierGLName').val('');
+            }
+            else {
+                var data = {
+                    accountId: $(this).val()
+                };
+
+                $.getJSON("GetGlAccountDetails", data, function (json) {
+                    if (json.length) {
+                        $('#CashierGLName').val(json[0].AccountName);
+                    }
+                });
+            }
+
+            return null;
+        });
+
+    });
+    
+    function helpGeneralSearch(flag) {
+        var url = '@Url.Content("~/")' + "Search/HelpGeneralSearch";
+        $.ajax({
+            type: "POST",
+            url: url,
+            data: '{searchFlag: "' + flag + '" }',
+            contentType: "application/json; charset=utf-8",
+            dataType: "html",
+            success: function (response) {
+                $('#searchContent').html(response);
+                $('#searchModal').modal('show');
+            },
+            failure: function () {
+                $('#searchContent').text(response.message);
+                $('#searchModal').modal('show');
+            }
+        });
+    }
+
+    function OnlyNumeric(evt) {
+        var charCode = (evt.which) ? evt.which : evt.keyCode;
+        if ((charCode < 48 || charCode > 57)) {
+            if (charCode === 8 || charCode === 46 || charCode === 0) {
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    function OnlyAlphabet(evt) {
+        var charCode = (evt.which) ? evt.which : evt.keyCode;
+        var txt = String.fromCharCode(charCode);
+        if ((txt.match(/^[a-zA-Z\b. ]+$/))) {
+            return true;
+        }
+        return false;
+    }
+
+</script>
+
+<div class="row">
+    <div class="col-md-5">
+        <h2>User Maintenance</h2>
+    </div>
+    <div class="col-md-7">
+        <p id="validationMessage" style="color: red"></p>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-10">
+        <form class="form-horizontal">
+            <h4><span>User Role:</span></h4>
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <div class="form-group row">
+                        @Html.Label("Role:", new {@class = "col-sm-2 col-form-label manadatory"})
+                        <div class="col-sm-3">
+                            @Html.TextBoxFor(model => model.RoleCode, null, new {@class = "form-control", disabled = true})
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        @Html.Label("Description:", new {@class = "col-sm-2 col-form-label manadatory"})
+                        <div class="col-sm-8">
+                            @Html.TextBoxFor(model => model.Description, null, new {@class = "form-control", disabled = true})
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <h4><span>User Details:</span></h4>
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <div class="form-group row">
+                        @Html.Label("Login ID:", new {@class = "col-sm-2 col-form-label manadatory"})
+                        <div class="col-sm-3">
+                            @Html.TextBoxFor(model => model.UserName, null, new {@class = "form-control", onkeypress = "return OnlyAlphabet(event);" })
+                            @Html.ValidationMessageFor(model => model.UserName, "", new { @class = "text-danger" })
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        @Html.Label("Password:", new {@class = "col-sm-2 col-form-label manadatory"})
+                        <div class="col-sm-3">
+                            @Html.PasswordFor(model => model.UserPassword, new {@class = "form-control", disabled = true})
+                        </div>
+                        @Html.Label("Confirm Password:", new {@class = "col-sm-2 col-form-label manadatory"})
+                        <div class="col-sm-3">
+                            @Html.PasswordFor(model => model.ConfirmPassword, new {@class = "form-control", disabled = true})
+                            @Html.ValidationMessageFor(model => model.ConfirmPassword, "", new { @class = "text-danger" })
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        @Html.Label("Surname:", new {@class = "col-sm-2 col-form-label manadatory"})
+                        <div class="col-sm-8">
+                            @Html.TextBoxFor(model => model.SurName, null, new {@class = "form-control", disabled = true})
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        @Html.Label("Other Names:", new {@class = "col-sm-2 col-form-label manadatory"})
+                        <div class="col-sm-8">
+                            @Html.TextBoxFor(model => model.OtherNames, null, new {@class = "form-control", disabled = true})
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        @Html.Label("Phone:", new {@class = "col-sm-2 col-form-label manadatory"})
+                        <div class="col-sm-3">
+                            @Html.TextBoxFor(model => model.PhoneNo1, null, new {@class = "form-control", maxlength = 20, onkeydown = "return OnlyNumeric(this);", disabled = true})
+                            @Html.ValidationMessageFor(model => model.PhoneNo1, "", new { @class = "text-danger" })
+                        </div>
+                        @Html.Label("Email:", new {@class = "col-sm-2 col-form-label manadatory"})
+                        <div class="col-sm-3">
+                            @Html.TextBoxFor(model => model.EmailId, null, new {@class = "form-control", disabled = true})
+                            @Html.ValidationMessageFor(model => model.EmailId, "", new { @class = "text-danger" })
+                        </div>
+                    </div>
+                    <h5><span>Advanced Settings:</span></h5>
+                    <div class="form-group row">                      
+                        <div class="col-sm-2">
+                            <div class="custom-control custom-checkbox">
+                                @Html.CheckBoxFor(model => model.IsCashier, new {@class = "custom-control-input", disabled = true})
+                                @Html.Label("Is Cashier", new {@class = "custom-control-label" })
+                            </div>
+                        </div>
+                        <div class="col-sm-3">
+                            @Html.TextBoxFor(model => model.CashierGl, null, new {@class = "form-control", disabled = true})
+                        </div>
+                        <div class="col-sm-5">
+                            @Html.TextBox("CashierGLName", null, new {@class = "form-control", disabled = true})
+                        </div>
+                    </div>
+                    <div class="form-group row">                      
+                        <div class="col-sm-10">
+                            <div class="custom-control custom-checkbox">
+                                @Html.CheckBoxFor(model => model.PasswordNeverExpires, new {@class = "custom-control-input", disabled = true})
+                                @Html.Label("Password Never Expires", new {@class = "custom-control-label" })
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group row">                      
+                        <div class="col-sm-10">
+                            <div class="custom-control custom-checkbox">
+                                @Html.CheckBoxFor(model => model.MustChangePassword, new {@class = "custom-control-input", disabled = true})
+                                @Html.Label("Must Change Password at Next Login", new {@class = "custom-control-label" })
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group row">                      
+                        <div class="col-sm-10">
+                            <div class="custom-control custom-checkbox">
+                                @Html.CheckBoxFor(model => model.IsDisabled, new {@class = "custom-control-input", disabled = true})
+                                @Html.Label("Account Is Disabled", new {@class = "custom-control-label" })
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="col-md-2">
+        <div class="panel panel-default" style="height: 645px">
+            <div class="panel-body table-responsive">
+                <table class="table table-bordered text-center">
+                    <tbody>
+                    <tr>
+                        <td>
+                            <button class="btn btn-block btn-info" disabled="disabled" id="btnSupervise"  type="button">Supervise</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <button class="btn btn-block btn-primary" id="btnAdd" type="button">Add</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <button class="btn btn-block btn-secondary" disabled="disabled" id="btnEdit" type="button">Edit</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <button class="btn btn-block btn-success" disabled="disabled" id="btnSave" type="button">Save</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <button class="btn btn-block btn-warning" id="btnCancel" disabled="disabled" type="button">Cancel</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <button class="btn btn-block btn-danger" disabled="disabled" id="btnDelete" type="button">Delete</button>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="searchModal" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Search</h4>
+            </div>
+            <div class="modal-body" id="searchContent">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="userSearchModal" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Search</h4>
+            </div>
+            <div class="modal-body" id="userSearchContent">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modal-success" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content bg-success">
+            <div class="modal-header">
+                <h4 class="modal-title">Success Modal</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <div class="modal-body" id="success-content">
+                <p id="success-message"></p>
+            </div>
+            <div class="modal-footer justify-content-between">
+                <button type="button" class="btn btn-outline-light" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modal-failure" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content bg-danger">
+            <div class="modal-header">
+                <h4 class="modal-title">Danger Modal</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <div class="modal-body" id="failure-content">
+                <p id="failure-message"></p>
+            </div>
+            <div class="modal-footer justify-content-between">
+                <button type="button" class="btn btn-outline-light" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+
+    var addOrEdit;
+
+    $('#btnAdd').click(function(e) {
+
+        e.preventDefault();
+
+        $('#RoleCode, #UserPassword, #ConfirmPassword, #SurName, #OtherNames, #PhoneNo1, #EmailId, #IsCashier, #PasswordNeverExpires, #MustChangePassword, #IsDisabled, #btnSave, #btnCancel').removeAttr('disabled');
+
+        $('#btnAdd, #btnSupervise, #btnEdit, #btnDelete').attr('disabled', 'disabled');
+
+        $('#RoleCode').focus();
+
+        addOrEdit = 'A';
+
+        return false;
+    });
+
+    $('#btnEdit').click(function(e) {
+
+        e.preventDefault();
+
+        $('#RoleCode, #UserPassword, #ConfirmPassword, #SurName, #OtherNames, #PhoneNo1, #EmailId, #IsCashier, #PasswordNeverExpires, #MustChangePassword, #IsDisabled, #btnSave, #btnCancel').removeAttr('disabled');
+
+        if ($('#IsCashier').is(":checked")) {
+            $("#CashierGl").removeAttr('disabled');
+        } else {
+            $("#CashierGl").attr('disabled', 'disabled');
+        }
+
+        $('#btnAdd, #btnSupervise, #btnEdit, #btnDelete, #UserName').attr('disabled', 'disabled');
+
+
+
+        addOrEdit = 'E';
+
+        return false;
+    });
+
+    $('#btnSave').click(function (e) {
+
+        e.preventDefault();
+
+        if ($('#UserPassword').val() === $('#ConfirmPassword').val()) {
+
+            var user = {
+                UserName: $('#UserName').val(),
+                RoleCode: $('#RoleCode').val(),
+                UserPassword: $('#UserPassword').val(),
+                SurName: $('#SurName').val(),
+                OtherNames: $('#OtherNames').val(),
+                EmailId: $('#EmailId').val(),
+                PhoneNo1: $('#PhoneNo1').val(),
+                IsCashier: $('#IsCashier').prop('checked'),
+                CashierGl: $('#CashierGl').val(),
+                PasswordNeverExpires: $('#PasswordNeverExpires').prop('checked'),
+                MustChangePassword: $('#MustChangePassword').prop('checked'),
+                IsDisabled: $('#IsDisabled').prop('checked')
+            };
+
+            $.ajax({
+                type: "POST",
+                url: '@Url.Action("AddEditSystemUsers", "SystemSecurity")',
+                data: {
+                    user: user,
+                    action: addOrEdit
+                },
+                dataType: "json",
+                success: function(response) {
+                    if (response) {
+                        if (response.success) {
+                            $('#success-message').text(response.message);
+                            $('#modal-success').modal('show');
+                        } else {
+                            $('#failure-message').text(response.message);
+                            $('#modal-failure').modal('show');
+                        }
+                    }
+                }
+            }).done(function() {
+                $('#RoleCode, #Description, #UserName, #SurName, #OtherNames, #UserPassword, #ConfirmPassword, #PhoneNo1, #EmailId, #CashierGl, #CashierGLName').val('');
+                $('#IsCashier, #PasswordNeverExpires, #MustChangePassword, #IsDisabled').prop('checked', false);
+
+                $('#btnEdit, #btnSave, #btnCancel, #btnDelete').attr('disabled', 'disabled');
+                $('#btnAdd').removeAttr('disabled');
+            });
+        } else {
+            $('#validationMessage').text('Confirm User Password - Mismatch detected');
+            $('#ConfirmPassword').focus();
+        }
+
+        return false;
+
+    });
+
+    $('#btnSupervise').click(function (e) {
+
+        var supervisor = '@ViewBag.CurrentUser';
+
+        if (supervisor !== userCreator) {
+
+            e.preventDefault();
+
+            $.ajax({
+                type: "POST",
+                url: '@Url.Action("SuperviseSystemUser", "SystemSecurity")',
+                data: {
+                    username: $('#UserName').val()
+                },
+                dataType: "json",
+                success: function(response) {
+                    if (response) {
+                        if (response.success) {
+                            $('#success-message').text(response.message);
+                            $('#modal-success').modal('show');
+                        } else {
+                            $('#failure-message').text(response.message);
+                            $('#modal-failure').modal('show');
+                        }
+                    }
+                }
+            });
+        } else {
+            $('#validationMessage').text("User creator can not supervise the same user");
+        }
+
+        return false;
+    });
+
+    $('#btnCancel').click(function(e) {
+
+        e.preventDefault();
+
+        $('#RoleCode, #Description, #UserName, #SurName, #OtherNames, #UserPassword, #ConfirmPassword, #PhoneNo1, #EmailId, #CashierGl, #CashierGLName').val('');
+        $('#IsCashier, #PasswordNeverExpires, #MustChangePassword, #IsDisabled').prop('checked', false);
+
+        $('#RoleCode, #Description, #SurName, #OtherNames, #UserPassword, #ConfirmPassword, #PhoneNo1, #EmailId, #CashierGl, #CashierGLName').attr('disabled', 'disabled');
+        $('#IsCashier, #PasswordNeverExpires, #MustChangePassword, #IsDisabled, #btnEdit, #btnSave, #btnCancel, #btnDelete, #btnSupervise').attr('disabled', 'disabled');
+
+        $('#btnAdd, #UserName').removeAttr('disabled');
+
+        return false;
+    });
+
+    $('#IsCashier').change(function() {
+
+        if ($(this).is(":checked")) {
+            $("#CashierGl").removeAttr('disabled');
+        } else {
+            $("#CashierGl").attr('disabled', 'disabled');
+            $("#CashierGl, #CashierGLName").val('');
+        }
+
+    });
+
+</script>

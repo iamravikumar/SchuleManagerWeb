@@ -1,0 +1,158 @@
+﻿@using SchuleManager.Controllers
+@using SchuleManager.Models
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1 maximum-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <title></title>
+    <link href="~/Content/roboto.css" rel="stylesheet" />
+    <link href="~/Content/Site.css" rel="stylesheet" />
+    @*<link href="~/Content/normalize.css" rel="stylesheet" />*@
+    <!-- Bootstrap Core CSS -->
+    <link href="~/Template/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <!-- MetisMenu CSS -->
+    <link href="~/Template/vendor/metisMenu/metisMenu.min.css" rel="stylesheet">
+    <link href="~/Template/vendor/metisMenu/metisMenu.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="~/Template/dist/css/sb-admin-2.css" rel="stylesheet">
+    <!-- Custom Fonts-->
+    <link href="~/Template/vendor/font-awesome/css/font-awesome.min.css" rel="stylesheet" />
+    
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    <style type="text/css">
+        * {
+            font-size: 13px !important;
+            font-weight: inherit;
+            font-family: 'Roboto', sans-serif;
+        }
+    </style>
+</head>
+<body>
+<div id="wrapper" style="color:white;">
+    <!-- Navigation -->
+    <nav class="navbar navbar-default navbar-static-top" role="navigation" style="margin-top:0px; background:; color:#ffffff">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="#" style="color:white;">SCHÜLE MANAGER</a>
+        </div>
+        <!-- /.navbar-header -->
+        <ul class="nav navbar-top-links navbar-right">
+            <li class="dropdown" style="color: aliceblue">
+                Hi  @Session["SurName"] !
+            </li>
+            <li class="dropdown">
+                <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+                    <i class="fa fa-user fa-fw"></i> <i class="fa fa-caret-down"></i>
+                </a>
+                <ul class="dropdown-menu dropdown-user">
+                    <li>
+                        @*<a href="/Login/Logout"><i class="fa fa-sign-out fa-fw"></i> Logout</a>*@
+                        <a href="@Url.Action("Logout", "Login")"><i class="fa fa-sign-out fa-fw"></i> Logout</a>
+                    </li>
+                    <li>
+                        <a href="@Url.Action("ChangePassword", "UserProfile")"><i class="fa fa-gear"></i> Change Password</a>
+                    </li>
+                </ul>
+                <!-- /.dropdown-user -->
+            </li>
+            <!-- /.dropdown -->
+        </ul>
+        <!-- /.navbar-top-links -->
+        <div class="navbar-default sidebar" role="navigation">
+            <div class="sidebar-nav navbar-collapse">
+                <ul class="nav" id="side-menu">
+                    <li>
+                        <a href="@Url.Action("Dashboard", "Dashboard")">Dashboard</a>
+                    </li>
+                    @{
+                        //foreach (System.Data.DataRow dr in ViewBag.Modules.Rows)
+                        //foreach (DataRow dr in (IEnumerable<DataRow>) Session["Modules"])
+                        foreach (var module in (List<DashboardController.Modules>)Session["Modules"])
+                        {
+                            <li>
+                                @*<i class="fa fa-dashboard fa-fw">@dr["ModuleName"]</i>*@
+                                <a href="#">@module.ModuleName<span class="fa arrow"></span></a>
+                                @{
+                                    ((DashboardController)ViewContext.Controller).GetSubModules((module.ModuleName));
+                                }
+                                <ul class="nav nav-second-level">
+                                    @{
+                                        var submoduleList = (List<SubModules>) Session["SubModule"];
+                                        var wantedSubmoduleList = submoduleList.Where(item => item.ModuleName == module.ModuleName);
+                                        foreach (var submodule in wantedSubmoduleList)
+                                        //foreach (var submodule in (List<SubModules>) Session["SubModule"])
+                                        {
+                                            <li>
+                                                @*<i class="fa fa-dashboard fa-fw">@submodule</i>*@
+                                                <a href="#">@submodule.SubModule<span class="fa arrow"></span></a>
+                                                @{
+                                                    ((DashboardController)ViewContext.Controller).GetMenus(submodule.SubModule);
+                                                }
+                                                <ul class="nav nav-third-level">
+                                                    @{
+                                                        var items = (List<Menus>) Session["Menus"];
+                                                        var wantedItems = items.Where(item => item.SubModule == submodule.SubModule);
+                                                        foreach (var menus in wantedItems)
+                                                        //foreach (var menus in (List<Menus>) Session["Menus"])
+                                                        {
+                                                            <li>
+                                                                <a href="@Url.Action(menus.ActionName, submodule.Controller)">@menus.MenuDescription</a>
+                                                                @*<a href="@Url.Action(menu, submodule)">@menu</a>*@
+                                                            </li>
+                                                        }
+                                                    }
+                                                </ul>
+                                            </li>
+                                        }
+                                     }
+                                </ul>
+                            </li>
+                       }
+                    }
+                </ul>
+            </div>
+            <!-- /.sidebar-collapse -->
+        </div>
+        <!-- /.navbar-static-side -->
+    </nav>
+    <div id="page-wrapper">
+        <div class="row">
+           
+            
+
+            @*<script src="~/Scripts/datetimepicker/jquery-1.12.4.js"></script>
+        
+            <script src="~/Scripts/jquery.validate.min.js"></script>
+            <script src="~/Scripts/jquery.validate.unobtrusive.min.js"></script>
+            <script src="~/Scripts/datetimepicker/jqueryui.js"></script>
+            
+            <script src="~/Scripts/datetimexdsoft/build/jquery.datetimepicker.full.min.js"></script>*@
+
+
+            @RenderBody()
+        </div>
+
+    </div>
+    <!-- /#page-wrapper -->
+</div>
+    <script src="~/Template/vendor/jquery/jquery.min.js"></script>
+    <script src="~/Template/vendor/bootstrap/js/bootstrap.min.js"></script>
+    <script src="~/Template/vendor/metisMenu/metisMenu.min.js"></script>
+    <script src="~/Template/dist/js/sb-admin-2.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,621 @@
+﻿@model SchuleManager.Models.ProductItems
+@{
+    ViewBag.Title = "Product Items";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<link href="~/Scripts/dataTablesScripts/dataTables.bootstrap.min.css" rel="stylesheet" />
+<link href="~/Content/jquery.dataTables.css" rel="stylesheet" />
+<script src="~/Scripts/dataTablesScripts/jquery.dataTables.min.js"></script>
+
+<script type="text/javascript">
+
+    var dataTable;
+
+    $(document).ready(function() {
+
+        $('#Products').focus();
+
+        $('#Products').change(function () {
+
+            if (typeof dataTable !== 'undefined' && dataTable !== null) {
+                dataTable.ajax.reload(function() {
+                    if ($('#Products').val() !== '') {
+                        $('#btnAdd').removeAttr('disabled');
+                    } else {
+                        $('#btnAdd, #btnEdit').attr('disabled', 'disabled');
+                    }
+                });
+
+                resetInputs();
+
+            } else {
+                loadProductItems();
+            }
+        });
+
+        //Contra Accunt pop up search modal incase of F2 press
+        $('#ContraAccountGL').on('input keydown', function (event) {
+
+            var keycode = event.keyCode || event.which;
+
+            if (keycode === 113) { //F2 key press
+
+                return helpGeneralLedgerSearch('A');
+
+            } else if (keycode === 8) { //Backspace key
+                $('#ContraAccountGlName').val('');
+                $('#ContraAccountType').val('');
+            }
+            else {
+                var data = {
+                    accountId: $(this).val()
+                };
+
+                $.getJSON("GetGlAccountDetails", data, function (json) {
+
+                    if (json.length) {
+
+                        $('#ContraAccountGlName').val(json[0].AccountName);
+                        $('#ContraAccountType').val(json[0].AccountType);
+                    }
+
+                });
+            }
+
+            return null;
+        });
+
+        //p & L Accunt pop up search modal incase of F2 press
+        $('#PAndLAccountGL').on('input keydown', function (event) {
+
+            var keycode = event.keyCode || event.which;
+
+            if (keycode === 113) { //F2 key press
+
+                return helpGeneralLedgerSearch('P');
+
+            } else if (keycode === 8) { //Backspace key
+                $('#PAndLAccountGlName').val('');
+                $('#PAndLAccountType').val('');
+            }
+            else {
+                var data = {
+                    accountId: $(this).val()
+                };
+
+                $.getJSON("GetGlAccountDetails", data, function (json) {
+
+                    if (json.length) {
+
+                        $('#PAndLAccountGlName').val(json[0].AccountName);
+                        $('#PAndLAccountType').val(json[0].AccountType);
+                    }
+
+                });
+            }
+
+            return null;
+        });
+
+    });
+
+    function loadProductItems() {
+      
+        dataTable = $("#productItemsTable").DataTable({
+            "processing": true, // for show progress bar
+            "serverSide": true, // for process server side
+            "filter": false, // this is for disable filter (search box)
+            "orderMulti": false, // for disable multiple column at once
+            "paging": false,
+            "info": false,
+            "ajax": {
+                "url": "/SchuleManager/Products/LoadProductItems",
+                "type": "POST",
+                "datatype": "json",
+                "data": function (d) {
+                    d.productCode = $('#Products').val();
+                }
+            },
+            "initComplete": function () {
+                if ($('#Products').val() !== '') {
+                    $('#btnAdd').removeAttr('disabled');
+                } else {
+                    $('#btnAdd').attr('disabled', 'disabled');
+                }
+            },
+            "columnDefs":
+            [
+                {
+                    "targets": [0],
+                    "visible": true,
+                    "searchable": false,
+                    "orderable": false
+                },
+                {
+                    "targets": [1],
+                    "visible": true,
+                    "searchable": false,
+                    "orderable": false
+                },
+                {
+                    "targets": [2],
+                    "visible": true,
+                    "searchable": false,
+                    "orderable": false
+                },
+                {
+                    "targets": [3],
+                    "visible": true,
+                    "searchable": false,
+                    "orderable": false
+                },
+                {
+                    "targets": [4],
+                    "visible": true,
+                    "searchable": false,
+                    "orderable": false
+                },
+                {
+                    "targets": [5],
+                    "visible": true,
+                    "searchable": false,
+                    "orderable": false
+                },
+                {
+                    "targets": [6],
+                    "visible": true,
+                    "searchable": false,
+                    "orderable": false
+                },
+                {
+                    "targets": [7],
+                    "visible": true,
+                    "searchable": false,
+                    "orderable": false
+                },
+                {
+                    "targets": [8],
+                    "visible": true,
+                    "searchable": false,
+                    "orderable": false
+                }
+            ],
+            "columns": [
+                { "data": "ItemCode", "name": "ItemCode", "autoWidth": true },
+                { "data": "Description", "name": "Description", "autoWidth": true },
+                { "data": "PAndLAccountGL", "name": "PAndLAccountGL", "autoWidth": true },
+                { "data": "PAndLAccountGLName", "name": "PAndLAccountGLName", "autoWidth": true },
+                { "data": "PAndLAccountType", "name": "PAndLAccountType", "autoWidth": true },
+                { "data": "ContraAccountGL", "name": "ContraAccountGL", "autoWidth": true },
+                { "data": "ContraAccountGLName", "name": "ContraAccountGLName", "autoWidth": true },
+                { "data": "ContraAccountType", "name": "ContraAccountType", "autoWidth": true },
+                { "data": "ApplyTo", "name": "ApplyTo", "autoWidth": true }
+            ]
+        });
+
+        $('#productItemsTable tbody').on('click', 'tr', function () {
+
+            if ($(this).hasClass('selected')) {
+                $(this).removeClass('selected');
+                $('#btnEdit, #btnDelete, #btnSave').attr('disabled', 'disabled');
+            }
+            else {
+                dataTable.$('tr.selected').removeClass('selected');
+                $(this).addClass('selected');
+
+                var pos = dataTable.row(this).index();
+                var row = dataTable.row(pos).data();
+
+                $('#ItemCode').val(row['ItemCode']);
+                $('#Description').val(row['Description']);
+                $('#PAndLAccountGL').val(row['PAndLAccountGL']);
+                $('#PAndLAccountGlName').val(row['PAndLAccountGlName']);
+                $('#PAndLAccountType').val(row['PAndLAccountType']);
+                $('#ContraAccountGL').val(row['ContraAccountGL']);
+                $('#ContraAccountGlName').val(row['ContraAccountGlName']);
+                $('#ContraAccountType').val(row['ContraAccountType']);
+
+                if (row['ApplyTo'] === 'N') {
+                    $("#NewStudents").prop("checked", true);
+                    $("#ContinuingStudents").prop("checked", false);
+                    $("#Both").prop("checked", false);
+                }
+                else if (row['ApplyTo'] === 'C') {
+                    $("#ContinuingStudents").prop("checked", true);
+                    $("#NewStudents").prop("checked", false);
+                    $("#Both").prop("checked", false);
+                } else {
+                    $("#Both").prop("checked", true);
+                    $("#ContinuingStudents").prop("checked", false);
+                    $("#NewStudents").prop("checked", false);
+                }
+
+                $('#btnEdit, #btnDelete, #btnSave').removeAttr('disabled');
+            }
+        });
+        
+    };
+
+</script>
+
+<div class="row">
+    <div class="col-md-12">
+        <h3>Product Items</h3>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-12">
+        <div class="panel panel-default">
+            <form class="form-horizontal">
+                <div class="panel-body">
+                    <div class="form-group row">
+                        @Html.Label("Product:", new {@class = "col-sm-2 col-form-label manadatory"})
+                        <div class="col-sm-5">
+                            @Html.DropDownList("Products", null,"- Select Product -", new {@class = "form-control"})
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-12">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h2 class="panel-title">Product Items Summary</h2>
+            </div>
+            <div class="panel-body" style="height: 300px">
+                <div class="table-responsive">
+                    <table id="productItemsTable" class="table table-striped table-bordered nowrap" style="width: 100%; font-size:9px">
+                        <thead>
+                        <tr>
+                            <th>Item Code</th>
+                            <th>Description</th>
+                            <th>P & L Account ID</th>
+                            <th>P & L Account Name</th>
+                            <th>P & L Type</th>
+                            <th>Contra Account ID</th>
+                            <th>Contra Account Name</th>
+                            <th>Contra Account Type</th>
+                            <th>Applies To</th>
+                        </tr>
+                        </thead>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-10">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h2 class="panel-title">Product Item Details</h2>
+            </div>
+            <form class="form-horizontal">
+                <div class="panel-body">
+                    <div class="form-group row">
+                        @Html.Label("Product Item:", new { @class = "col-sm-2 col-form-label manadatory" })
+                        <div class="col-sm-3">
+                            @Html.TextBoxFor(model => model.ItemCode, null, new { @class = "form-control", disabled = true })
+                        </div>
+                        <div class="col-sm-5">
+                            @Html.TextBoxFor(model => model.Description, null, new { @class = "form-control", disabled = true })
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        @Html.Label("P & L A/C:", new { @class = "col-sm-2 col-form-label manadatory" })
+                        <div class="col-sm-3">
+                            @Html.TextBoxFor(model => model.PAndLAccountGL, null, new { @class = "form-control", disabled = true })
+                        </div>
+                        <div class="col-sm-3">
+                            @Html.TextBoxFor(model => model.PAndLAccountGLName, null, new { @class = "form-control", disabled = true })
+                        </div>
+                        <div class="col-sm-2">
+                            @Html.TextBoxFor(model => model.PAndLAccountType, null, new { @class = "form-control", disabled = true })
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        @Html.Label("GL Contra A/C:", new { @class = "col-sm-2 col-form-label manadatory" })
+                        <div class="col-sm-3">
+                            @Html.TextBoxFor(model => model.ContraAccountGL, null, new { @class = "form-control", disabled = true })
+                        </div>
+                        <div class="col-sm-3">
+                            @Html.TextBoxFor(model => model.ContraAccountGLName, null, new { @class = "form-control", disabled = true })
+                        </div>
+                        <div class="col-sm-2">
+                            @Html.TextBoxFor(model => model.ContraAccountType, null, new { @class = "form-control", disabled = true })
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        @Html.Label("Apply Fees To:", new { @class = "col-sm-2 col-form-label manadatory" })
+                        <div class="col-sm-8">
+                            <div class="custom-control custom-radio">
+                                @Html.RadioButtonFor(model => model.ApplyTo, "N", new {@class = "custom-control-input", disabled = true})
+                                @Html.Label("New Students", new {@class = "custom-control-label"})
+                            </div>
+                            <div class="custom-control custom-radio">
+                                @Html.RadioButtonFor(model => model.ApplyTo, "C", new {@class = "custom-control-input", disabled = true})
+                                @Html.Label("Continuing Students", new {@class = "custom-control-label"})
+                            </div>
+                            <div class="custom-control custom-radio">
+                                @Html.RadioButtonFor(model => model.ApplyTo, "B", new {@class = "custom-control-input", disabled = true})
+                                @Html.Label("Both", new {@class = "custom-control-label"})
+                            </div>
+                        </div>
+                    </div>
+                </div>     
+            </form>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="panel panel-default" style="height: 300px">
+            <div class="panel-body table-responsive">
+                <table class="table table-bordered text-center">
+                    <tbody>
+                    <tr>
+                        <td>
+                            <button class="btn btn-block btn-primary" disabled="disabled" id="btnAdd"  type="button">Add</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <button class="btn btn-block btn-secondary" disabled="disabled" id="btnEdit" type="button">Edit</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <button class="btn btn-block btn-success" disabled="disabled" id="btnSave" type="button">Save</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <button class="btn btn-block btn-info" id="btnCancel" disabled="disabled" type="button">Cancel</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <button class="btn btn-block btn-danger" disabled="disabled" id="btnDelete" type="button">Delete</button>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="modal-success" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content bg-success">
+            <div class="modal-header">
+                <h4 class="modal-title">Success Modal</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span></button>
+            </div>
+            <div class="modal-body" id="success-content">
+                <p id="success-message"></p>
+            </div>
+            <div class="modal-footer justify-content-between">
+                <button type="button" class="btn btn-outline-light" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="modal-failure" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content bg-danger">
+            <div class="modal-header">
+                <h4 class="modal-title">Danger Modal</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <div class="modal-body" id="failure-content">
+                <p id="failure-message"></p>
+            </div>
+            <div class="modal-footer justify-content-between">
+                <button type="button" class="btn btn-outline-light" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="searchModal" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Search</h4>
+            </div>
+            <div class="modal-body" id="searchContent">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+    <script type="text/javascript">
+
+        var addOrEdit;
+
+        function helpGeneralSearch(flag) {
+            var url = '@Url.Content("~/")' + "Search/HelpGeneralSearch";
+            $.ajax({
+                type: "POST",
+                url: url,
+                data: '{searchFlag: "' + flag + '" }',
+                contentType: "application/json; charset=utf-8",
+                dataType: "html",
+                success: function (response) {
+                    $('#searchContent').html(response);
+                    $('#searchModal').modal('show');
+                },
+                failure: function () {
+                    $('#searchContent').text(response.message);
+                    $('#searchModal').modal('show');
+                }
+            });
+        }
+
+        function helpGeneralLedgerSearch(flag) {
+            var url = '@Url.Content("~/")' + "Search/HelpGeneralLedgerSearch";
+            $.ajax({
+                type: "POST",
+                url: url,
+                data: '{searchFlag: "' + flag + '" }',
+                contentType: "application/json; charset=utf-8",
+                dataType: "html",
+                success: function (response) {
+                    $('#searchContent').html(response);
+                    $('#searchModal').modal('show');
+                },
+                failure: function () {
+                    $('#searchContent').text(response.message);
+                    $('#searchModal').modal('show');
+                }
+            });
+        }
+
+        $('#btnAdd').click(function (e) {
+
+            e.preventDefault();
+
+            $('#btnSave, #btnCancel, #Description, #PAndLAccountGL, #ContraAccountGL, #ApplyTo').removeAttr('disabled');
+
+            $('#btnAdd, #btnEdit').attr('disabled', 'disabled');
+
+            addOrEdit = 'A';
+
+            return false;
+        });
+
+        $('#btnEdit').click(function (e) {
+
+            e.preventDefault();
+
+            $('#btnSave, #btnCancel, #Description, #PAndLAccountGL, #ContraAccountGL, #ApplyTo').removeAttr('disabled');
+
+            $('#btnAdd, #btnEdit').attr('disabled', 'disabled');
+
+            addOrEdit = 'E';
+
+            return false;
+        });
+
+        $('#btnCancel').click(function (e) {
+
+            e.preventDefault();
+
+            $('#btnSave #btnCancel, #Description, #PAndLAccountGL, #ContraAccountGL, #ApplyTo')
+                .attr('disabled', 'disabled');
+
+            if ($('#Products').val() !== '') {
+                $('#btnAdd').removeAttr('disabled');
+            } else if ($('#ItemCode').val() !== '' && $('#Description').val() !== '') {
+                $('#btnEdit').removeAttr('disabled');
+            } else {
+                $('#btnAdd, #btnEdit, #btnCancel').attr('disabled', 'disabled');
+            }
+
+            return false;
+        });
+
+        function resetInputs() {
+            $(
+                    '#ItemCode, #Description, #PAndLAccountGL, #PAndLAccountGlName, #PAndLAccountType, #ContraAccountGL, #ContraAccountGlName, #ContraAccountType')
+                .val('');
+
+            $("#ApplyTo").prop("checked", false);
+        }
+
+        $('#btnSave').click(function (e) {
+
+            e.preventDefault();
+
+            var appliesTo = $("input[name='ApplyTo']:checked").val();
+
+            var productItem = {
+                ItemCode: $('#ItemCode').val(),
+                Description: $('#Description').val(),
+                ProductCode: $('#Products').val(),
+                PAndLAccountGL: $('#PAndLAccountGL').val(),
+                ContraAccountGL: $('#ContraAccountGL').val(),
+                ApplyTo: appliesTo
+            };
+
+            $.ajax({
+                type: "POST",
+                url: '@Url.Action("AddEditProductItems", "Products")',
+                data: {
+                    item: productItem,
+                    action: addOrEdit
+                },
+                dataType: "json",
+                success: function (response) {
+                    if (response) {
+                        dataTable.ajax.reload();
+                        if (response.success) {
+                            $('#success-message').text(response.message);
+                            $('#modal-success').modal('show');
+                        } else {
+                            $('#failure-message').text(response.message);
+                            $('#modal-failure').modal('show');
+                        }
+                    }
+                }
+            }).done(function () {
+                if ($('#Products').val() !== '') {
+                    $('#btnAdd').removeAttr('disabled');
+
+                    if ($('#ItemCode').val() !== '') {
+                        $('#btnEdit').removeAttr('disabled');
+                    }
+                }
+
+                $('#btnSave').attr('disabled', 'disabled');
+            });
+
+            return false;
+        });
+
+        $('#btnDelete').click(function (e) {
+
+            e.preventDefault();
+
+            var productItem = {
+                ItemCode: $('#ItemCode').val(),
+                ProductCode: $('#Products').val(),
+                Deleted: 'Y'
+            };
+
+            $.ajax({
+                type: "POST",
+                url: '@Url.Action("AddEditProductItems", "Products")',
+                data: {
+                    item: productItem,
+                    action: 'D'
+                },
+                dataType: "json",
+                success: function (response) {
+                    if (response) {
+                        dataTable.ajax.reload();
+                        $('#message').text(response.message);
+                        $('#messageModal').modal('show');
+                    }
+                }
+            });
+
+            return false;
+
+        });
+
+    </script>
